@@ -32,6 +32,15 @@ double* malloc_1d(int n) {
     return ptr;
 }
 
+double** malloc_2d(int n, int m) {
+    int i = 0;
+    double ** arr = (double **) malloc(n * sizeof(double *));
+    for( i = 0; i < n; i++) {
+        arr[i] = malloc_1d(m);
+    }
+    return arr;
+}
+
 void write_to_file(char* f_name, double * values, int n) {
     int i;
     FILE *f = fopen(f_name, "a+");
