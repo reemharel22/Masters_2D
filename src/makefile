@@ -1,16 +1,21 @@
-all: soNumerit soEF so
+CC := gcc
+CFLAGS :=  -Wall -lm -fopenmp
+DEPS := utils.o problem.o initialize.o
+CFILES :=  utils.o problem.o
 
-main: main.c 2d_kershaw.o utils.o
-	gcc -o main main.c -lm -fopenmp
+all: main
 
-soEF: SuOlsonEddingtonFactor.c
-	gcc -o soEF SuOlsonEddingtonFactor.c -lm -fopenmp
+main: main.c $(DEPS)
+	$(CC) $(DEPS) -o main main.c $(CFLAGS)
 
-so: tridFunc.o SuOlsonAll.c SuOlsonAll.h
-	gcc -o so SuOlsonAll.c tridFunc.o -lm -fopenmp
+initialize: initialize.c initialize.h
+	$(CC) -c -o initialize.o initialize.c $(CFLAGS)
 
 utils: utils.c utils.h
-	gcc -c -o utils.o utils.c -lm -fopenmp
+	$(CC) -c -o utils.o utils.c $(CFLAGS)
+
+problem: problem.c problem.h
+	$(CC) -c -o problem.o problem.c $(CFLAGS)
 
 clean:
-	rm -f *.o soNumerit
+	rm -f *.o 
