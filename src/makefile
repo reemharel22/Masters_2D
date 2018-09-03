@@ -5,16 +5,16 @@ CFILES :=  utils.o problem.o
 
 all: main
 
-main: main.c $(DEPS)
+main: main.c $(DEPS) structs.h
 	$(CC) $(DEPS) -o main main.c $(CFLAGS)
 
-initialize: initialize.c initialize.h
+initialize: structs.h initialize.c initialize.h
 	$(CC) -c -o initialize.o initialize.c $(CFLAGS)
 
 utils: utils.c utils.h
 	$(CC) -c -o utils.o utils.c $(CFLAGS)
 
-problem: problem.c problem.h
+problem: problem.c problem.h structs.h
 	$(CC) -c -o problem.o problem.c $(CFLAGS)
 
 clean:

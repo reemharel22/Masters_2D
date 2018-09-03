@@ -122,7 +122,8 @@ inline double square_volume(double x1, double x2, double y1, double y2) {
     return (y2-y1) * (x2-x1);
 }
 
-double mesh_square_volume(double **volume, double **X, double **Y, int n, int m) {
+void mesh_square_volume(double **volume, double **X, double **Y, 
+int n, int m) {
     int i,j;
     for ( i = 0; i < n-1; i++) {
         for (j = 0; j < m-1; j++) {

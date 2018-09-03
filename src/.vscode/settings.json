@@ -3,6 +3,8 @@
         "globals.h": "c",
         "problem.h": "c",
         "stdlib.h": "c",
-        "initialize.h": "c"
+        "initialize.h": "c",
+        "stdio.h": "c",
+        "structs.h": "c"
     }
 }

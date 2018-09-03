@@ -15,5 +15,5 @@ void free_2d(double **ptr, int n);
 void free_3d(double ***ptr, int n,int m);
 void free_1d(double *ptr);
 inline double square_volume(double x1, double x2, double y1, double y2);
-double mesh_square_volume(double **volume, double **X, double **Y, int n, int m);
+void mesh_square_volume(double **volume, double **X, double **Y, int n, int m);
 #endif
