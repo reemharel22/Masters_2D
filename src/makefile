@@ -3,10 +3,13 @@ CFLAGS :=  -Wall -lm -fopenmp
 DEPS := utils.o problem.o initialize.o
 CFILES :=  utils.o problem.o
 
-all: main
+all: main test
 
 main: main.c $(DEPS) structs.h
 	$(CC) $(DEPS) -o main main.c $(CFLAGS)
+
+test: test.c utils.o
+	$(CC) utils.o -o test test.c $(CFLAGS)
 
 initialize: structs.h initialize.c initialize.h
 	$(CC) -c -o initialize.o initialize.c $(CFLAGS)

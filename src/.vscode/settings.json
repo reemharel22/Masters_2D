@@ -5,6 +5,9 @@
         "stdlib.h": "c",
         "initialize.h": "c",
         "stdio.h": "c",
-        "structs.h": "c"
+        "structs.h": "c",
+        "cmath": "c",
+        "utils.h": "c",
+        "math.h": "c"
     }
 }

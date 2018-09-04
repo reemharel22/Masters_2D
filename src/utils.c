@@ -4,12 +4,12 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "utils.h"
+#include <omp.h>
 
-double get_time() {
-   struct timeval start;
-   gettimeofday(&start, 0);
-   return start.tv_usec;
+inline double get_time() {
+  return omp_get_wtime();
 }
 
 inline double avg(double x, double y) {
