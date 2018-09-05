@@ -3,6 +3,8 @@
 #include "utils.h"
 #include "initialize.h"
 #include "python3.6m/Python.h"
+#include "python_bridge.h"
+
 /**
  * @file initialize.c
  */
@@ -11,8 +13,78 @@
  * @brief initializes the structs.
  */
 void init1(Problem*p) {
+    PyObject *pName, *pModule, *pFunc;
+    PyObject *pArgs, *pValue;
+    PyObject *ob1,*ob2;
+    int i;
+    int argc = 5;
+    double a = 2;
+    
+    char*argv[5] = {"call","input","multiply","4","5"};
     
     Py_Initialize();
+    
+    //PySys_SetArgv(argc,argv);
+    setup_params();
+    printf("hello\n");
+    Py_Finalize();
+    return;
+    /*pName = PyString_FromString(argv[1]);
+    /* Error checking of pName left out 
+
+    pModule = PyImport_Import(pName);
+    Py_DECREF(pName);
+
+    if (pModule != NULL) {
+        pFunc = PyObject_GetAttrString(pModule, argv[2]);
+        /* pFunc is a new reference 
+
+        if (pFunc && PyCallable_Check(pFunc)) {
+            pArgs = PyTuple_New(argc - 3);
+            for (i = 0; i < argc - 3; ++i) {
+                pValue = PyInt_FromLong(atoi(argv[i + 3]));
+                if (!pValue) {
+                    Py_DECREF(pArgs);
+                    Py_DECREF(pModule);
+                    fprintf(stderr, "Cannot convert argument\n");
+                    return 1;
+                }
+                PyTuple_SetItem(pArgs, i, pValue);
+            }
+            pValue = PyEval_CallObject(pFunc, pArgs);
+            //pValue = PyObject_CallObject(pFunc, pArgs);
+            //PyArg_ParseTupleAndKeywords(Pva)
+            if (pValue != NULL) {
+                PyArg_ParseTuple(pValue,"[i]",ob1,ob2);
+                printf("Result of call: %ld\t%ld\n", PyInt_AsLong(pValue),PyInt_AsLong(ob2));
+                printf("hello\n");
+                exit(1);
+                Py_DECREF(pValue);
+                Py_DECREF(pArgs);
+
+            }
+            else {
+                Py_DECREF(pFunc);
+                Py_DECREF(pModule);
+                PyErr_Print();
+                fprintf(stderr,"Call failed\n");
+                return 1;
+            }
+        }
+        else {
+            if (PyErr_Occurred())
+                PyErr_Print();
+            fprintf(stderr, "Cannot find function \"%s\"\n", argv[2]);
+        }
+        Py_XDECREF(pFunc);
+        Py_DECREF(pModule);
+    }
+    else {
+        PyErr_Print();
+        fprintf(stderr, "Failed to load \"%s\"\n", argv[1]);
+        return 1;
+    }
+    Py_Finalize();*/
 }
 void init(Problem*p) {
     int i,j;
