@@ -2,9 +2,8 @@
 #include <stdlib.h>
 #include "utils.h"
 #include "initialize.h"
-#include "python3.6m/Python.h"
-#include "python_bridge.h"
-
+#include "python2.7/Python.h"
+#include "noddy.c"
 /**
  * @file initialize.c
  */
@@ -12,35 +11,28 @@
 /**
  * @brief initializes the structs.
  */
-void init1(Problem*p) {
+void init_python(Problem*p) {
     PyObject *pName, *pModule, *pFunc;
-    PyObject *pArgs, *pValue;
-    PyObject *ob1,*ob2;
-    int i;
-    int argc = 5;
-    double a = 2;
-    
-    char*argv[5] = {"call","input","multiply","4","5"};
-    
-    Py_Initialize();
-    
-    //PySys_SetArgv(argc,argv);
-    setup_params();
-    printf("hello\n");
-    Py_Finalize();
-    return;
-    /*pName = PyString_FromString(argv[1]);
-    /* Error checking of pName left out 
+    PyObject * pValue;
+    int argc = 3;
+    char *argv[3] = {"call","input","test"};
+    Noddy *n = 0;
 
+    /* Error checking of pName left out */
+    Py_Initialize();
+    PyRun_SimpleString("import sys");
+    PyRun_SimpleString("sys.path.append(\".\")");
+
+    pName = PyString_FromString(argv[1]);
     pModule = PyImport_Import(pName);
     Py_DECREF(pName);
 
     if (pModule != NULL) {
         pFunc = PyObject_GetAttrString(pModule, argv[2]);
-        /* pFunc is a new reference 
-
+        /* pFunc is a new reference */
+    
         if (pFunc && PyCallable_Check(pFunc)) {
-            pArgs = PyTuple_New(argc - 3);
+           /* pArgs = PyTuple_New(argc - 3);
             for (i = 0; i < argc - 3; ++i) {
                 pValue = PyInt_FromLong(atoi(argv[i + 3]));
                 if (!pValue) {
@@ -50,17 +42,22 @@ void init1(Problem*p) {
                     return 1;
                 }
                 PyTuple_SetItem(pArgs, i, pValue);
-            }
-            pValue = PyEval_CallObject(pFunc, pArgs);
+            }*/
+
+            n = PyObject_CallObject(pFunc, 0);
             //pValue = PyObject_CallObject(pFunc, pArgs);
             //PyArg_ParseTupleAndKeywords(Pva)
-            if (pValue != NULL) {
-                PyArg_ParseTuple(pValue,"[i]",ob1,ob2);
-                printf("Result of call: %ld\t%ld\n", PyInt_AsLong(pValue),PyInt_AsLong(ob2));
-                printf("hello\n");
-                exit(1);
-                Py_DECREF(pValue);
-                Py_DECREF(pArgs);
+            if (n != NULL) {
+                p->coor.K_max = n->k_max;
+                p->coor.L_max = n->l_max;
+                p->vol.KC_max =  n->kc_max;
+                p->vol.LC_max =  n->lc_max;
+                p->time.t0 = n->t0;
+                p->time.dt = n->dt;
+                p->time.time_stop = n->time_stop;
+                Noddy_dealloc(n);
+                Py_DECREF(n);
+               // Py_DECREF(pArgs);
 
             }
             else {
@@ -68,7 +65,7 @@ void init1(Problem*p) {
                 Py_DECREF(pModule);
                 PyErr_Print();
                 fprintf(stderr,"Call failed\n");
-                return 1;
+                return;
             }
         }
         else {
@@ -82,42 +79,45 @@ void init1(Problem*p) {
     else {
         PyErr_Print();
         fprintf(stderr, "Failed to load \"%s\"\n", argv[1]);
-        return 1;
+        return;
     }
-    Py_Finalize();*/
+    Py_Finalize();
 }
+/**
+ * @brief initializes all of the structures
+ * First it goes to another function that initialize a python interpeter
+ * and executes the python function that will give us the sizes.
+ * Second, we increment the number of K,L by 2, this is the imaginary cells.
+ * Third, we allocate the memory.
+ * Fourth initialize values.
+ */
 void init(Problem*p) {
     int i,j;
-    double K_max,L_max, KC_max,LC_max;
     double **R,**Z,**E,**E_o;
-    //coordinates 
-    K_max = 78;
-    L_max = 76;
-    KC_max = K_max - 1;
-    LC_max = L_max - 1;
+    int K_max,L_max,KC_max,LC_max;
+    init_python(p);
     // WE HAVE IMAGINARY CELLS. SO WE NEED TO ADD FOR THE VERTEX QUANT..
     // + 2 (right and left edge)
     // AND TO CELL QUANTITY + 2 ASWELL (EACH)
-    p->coor.K_max = K_max;
-    p->coor.L_max = L_max;
+    K_max = p->coor.K_max += 2;
+    L_max = p->coor.L_max += 2;
+    KC_max = p->diff_coeff.KC_max = p->eng.KC_max = p->vol.KC_max += 2;
+    LC_max = p->diff_coeff.LC_max = p->eng.LC_max = p->vol.LC_max += 2;
+
+    //malloc
     p->coor.R = malloc_2d(K_max, L_max );
     p->coor.Z = malloc_2d(K_max, L_max );
-    
-    //energy 
-    p->eng.KC_max = p->vol.KC_max =  KC_max;
-    p->eng.LC_max = p->vol.LC_max =  LC_max;
+
     p->eng.E_current = malloc_2d(KC_max, LC_max );
     p->eng.E_old     = malloc_2d(KC_max, LC_max );
 
-    //volume
     p->vol.volume = malloc_2d(KC_max, LC_max);
+    
+    p->diff_coeff.D = malloc_2d(KC_max, LC_max);
 
     //time
     p->time.cycle = 0;
-    p->time.t0 = 0;
-    p->time.dt = 0.01;
     p->time.time_passed = p->time.t0;
-    p->time.time_stop = 0.01;
 
     //init
     init_mesh_Kershaw1(p->coor.K_max,p->coor.L_max,p->coor.R,p->coor.Z);
@@ -127,7 +127,9 @@ void init(Problem*p) {
              p->eng.E_current[i][j] = 0;
         }
     }
-    mesh_square_volume(p->vol.volume, p->coor.R,p->coor.Z,K_max,L_max);
+
+    mesh_square_volume(p->vol.volume, p->coor.R,p->coor.Z,KC_max,LC_max);
+
 }
 
 void init_mesh_Kershaw1(int K_max, int L_max, double **R, double **Z) {

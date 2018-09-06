@@ -19,9 +19,8 @@
 int main (int argc, char* argv[]) {
     Problem prob;
 
-    init1(&prob);
-    exit(0);
-        do {
+    init(&prob);
+    do {
         
     } while( !update_time(&prob.time) );
     

@@ -63,6 +63,7 @@ typedef struct Time {
  * 
  */
 typedef struct Problem {
+    struct Diff_Coeff diff_coeff;
     struct Volume vol;
     struct Energy eng;
     struct Coordinate coor;

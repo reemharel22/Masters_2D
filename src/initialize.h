@@ -7,7 +7,7 @@ double ***R,double ***Z, double ***E_current, double ***E_old, double****A, doub
 
 void init(Problem*p);
 void init_mesh_Kershaw1(int K, int L, double **R, double **Z);
-void init1(Problem*p);
+void init_python(Problem*p);
 void clean_prog(Problem *p);
 
 #endif

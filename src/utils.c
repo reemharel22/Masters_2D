@@ -5,18 +5,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "utils.h"
 #include <omp.h>
+#include "utils.h"
 
-inline double get_time() {
+double get_time() {
   return omp_get_wtime();
 }
 
-inline double avg(double x, double y) {
+double avg(double x, double y) {
     return (x + y) * 0.5;
 }
 
-inline double avg_harmonic(double x, double y) {
+double avg_harmonic(double x, double y) {
     if (x == 0) {
         printf("warning utils.c - x is zero, replacing it with 1e-15\n");
         x = 1-15;
@@ -118,7 +118,7 @@ void free_3d(double ***ptr, int n, int m) {
     free(ptr);
 }
 
-inline double square_volume(double x1, double x2, double y1, double y2) {
+double square_volume(double x1, double x2, double y1, double y2) {
     return (y2-y1) * (x2-x1);
 }
 

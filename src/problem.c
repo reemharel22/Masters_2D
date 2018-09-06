@@ -17,7 +17,7 @@ int update_time(Time *t){
     }
     t->cycle += 1;
     t->time_passed += t->dt;
-
+    printf("Ended time step number %d\n",t->cycle);
     return 0;
 }
 
@@ -83,18 +83,19 @@ double ***build_matrix_A(Coordinate *coor, Volume *vol,Diff_Coeff *diff, double 
     // #pragma omp parallel for default(shared)
     for(i = 0; i < KC_max - 1; i++){
         for (j = 0; j < LC_max - 1; j++) {
-            //TODO, check if it's better to pre calculate RL_KL RK_KL etc before.
             //the reason we take jacob(i,j) is because we already made sigma(i,j)
             // be the same index as jacob(i,j), only R is shifted. see (15)
             sigma[i][j] = (R[i + 1][j + 1] + R[i + 1][j]) 
             / ( D[i][j] * jacobi[i][j] + D[i + 1][j] * jacobi[i + 1][j]);
+
             lambda[i][j] = (R[i + 1][j + 1] + R[i][j + 1]) 
             / ( D[i][j] * jacobi[i][j] + D[i][j + 1] * jacobi[i][j + 1]);
             
         }
     }
     
-    //check two schemes.
+    //maybe merge with the next loop for speed..
+    //calculate the rhos
     double C_KL;
     double sqrt_sigma_ij,sqrt_sigma_i1j, sqrt_lambda_ij, sqrt_lambda_ij1;
     k = 0;
@@ -116,6 +117,7 @@ double ***build_matrix_A(Coordinate *coor, Volume *vol,Diff_Coeff *diff, double 
         k = i;
     }
 
+    //calculate the small sigma and small lambda
     double r1,r2,r3,r4;
     double z1,z2,z3,z4;
     for(i = 0; i < KC_max - 1; i++){
@@ -170,4 +172,38 @@ double ***build_matrix_A(Coordinate *coor, Volume *vol,Diff_Coeff *diff, double 
     }
 
     return A;
+}
+
+void apply_boundary(double **data, int n, int m) {
+    int i, j;
+    //TODO check what does it mean n*n*RK?????
+    //TODO tell shay, as oppose to the paper. i calculate it like "them"
+    //i.e boundary condition is abit different
+
+
+    // boundary condition number (2)
+    //if (i,j) and (i + 1,j) are imaginary. lel
+    //i.e: we know j = 0,m-1 are imaginry. => i= 0...n-1 with j=0,m-1 are the cells we want.
+    // we can unroll for efficiency
+    for (i = 0; i < n; i++) {
+        data[i][0]     = 0;
+        data[i][m - 1] = 0;
+    }
+
+    //boundary condition number (3)
+    //if (i,j) real and (i+1,j) imaginry. no escape!
+    //i.e: for i = n-2 and j = 1...m-2 are the cells we want.
+    for (j = 1; j < m - 1; j++) {
+        data[n - 2][j] = 0;
+    }
+
+    //boundary condition number (4)
+    //if (i,j) imaginary and (i + 1,j) real. no escape!
+    //i.e: for i = 0 and j= 1..m-2
+    for (j = 1; j < m - 1; j++) {
+        data[0][j] = 0;
+    }
+
+    //boundary condition number (5)
+    //if (i,j) real and (i +1,j) imaginary with escape
 }
