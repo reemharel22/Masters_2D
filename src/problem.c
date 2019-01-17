@@ -131,8 +131,8 @@ double ***build_matrix_A(Coordinate *coor, Volume *vol,Diff_Coeff *diff, double 
             z3 = ZK_KL[i][j]     * ZK_KL[i][j];
             z4 = ZK_KL[i][j + 1] * ZK_KL[i][j + 1];
 
-            sigma[i][j] = sigma[i][j] * ( r1 + z1  + r2 + z2) /2.0;
-            lambda[i][j] = lambda[i][j] * ( r3 + z3 + r4 + z4) /2.0;
+            sigma[i][j] = sigma[i][j] * ( r1 + z1  + r2 + z2)  / 2.0;
+            lambda[i][j] = lambda[i][j] * ( r3 + z3 + r4 + z4) / 2.0;
         }
     }
 
@@ -147,7 +147,7 @@ double ***build_matrix_A(Coordinate *coor, Volume *vol,Diff_Coeff *diff, double 
     for(i = 0; i < K_max - 1; i++){
         //k is equivilent to i - 1. instead of MAX(i,0)...
         for (j = 0; j < L_max - 1; j++) {
-            vol_1 = 1.0/volume[i][j];
+            vol_1 = 1.0 / volume[i][j];
             A[i][j][4] = 1.0 - dt*vol_1*( -sigma[i][j] - sigma[k][j] - lambda[i][j] - lambda[i][j - 1]
                          + 0.5* (rho1[i][j] + rho2[i][j] - rho3[i][j] - rho4[i][j]) );
             

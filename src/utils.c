@@ -35,18 +35,33 @@ double* malloc_1d(int n) {
 
 double** malloc_2d(int n, int m) {
     int i = 0;
+    int j = 0;
     double ** arr = (double **) malloc(n * sizeof(double *));
     for( i = 0; i < n; i++) {
         arr[i] = malloc_1d(m);
+    }
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < m; j++) {
+            arr[i][j] = 0.0;
+        }
     }
     return arr;
 }
 
 double*** malloc_3d(int n, int m, int q) {
     int i = 0;
+    int j = 0;
+    int k = 0;
     double *** arr = (double ***) malloc(n * sizeof(double **));
     for( i = 0; i < n; i++) {
         arr[i] = malloc_2d(m,q);
+    }
+     for (i = 0; i < n; i++) {
+        for (j = 0; j < m; j++) {
+            for (k = 0; k < q; k++) {
+                arr[i][j][k] = 0.0;
+            }
+        }
     }
     return arr;
 }
@@ -68,7 +83,7 @@ Y, int n, int m) {
     FILE *f = fopen(f_name, "w+");
     for (i = 0 ; i < n; i++ ) {
         for (j = 0; j < n; j++) {
-            fprintf(f, "%lf %lf\n",X[i][j],Y[i][j]);
+            fprintf(f, "%lf %lf\n", X[i][j], Y[i][j]);
         }
     }
     fclose(f);
@@ -95,6 +110,31 @@ void print_matrix_col(int K, int L, double**val) {
     }
     
 } 
+
+
+void print_2d(int K, int L, double **arr) {
+    int i,j;
+    for (i = 0; i < K; i++) {
+        for (j = 0; j < L; j++) {
+            printf("%10e\t", arr[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+void print_3d(int K, int L, int Q, double ***arr) {
+    int i, j, k;
+    for (i = 0; i < K; i++) {
+        for (j = 0; j < L; j++) {
+            for (k = 0; k < Q; k++) {
+                printf("%10e\t", arr[i][j]);
+            }
+            
+        }
+        printf("\n");
+    }
+}
+
 
 void free_1d(double *ptr) {
     free(ptr);
@@ -129,5 +169,118 @@ int n, int m) {
         for (j = 0; j < m-1; j++) {
             volume[i][j] = square_volume(X[i][j],X[i][j + 1],Y[i][j],Y[i + 1][j]);           
         }
+    }
+}
+
+/**
+ * @brief Iterative matrix Ax=b solver in Gauss-Seidel method.
+ * iter = maximum number of iterations
+ * n = size of matrix, and vectors
+ * epsilon accuaracy requiremnt
+ * A the matrix
+ * x pointer to the the solved vector.
+ * b pointer to the vector
+ * input is a pointer to the matrix
+ */
+void gauss_seidel_method(int max_iter, int K, int L, double epsilon, double ***A, double **x, double **b) {
+    int i, j;
+    double sum;
+    int iter;
+    double aii_r;
+    for (iter = 0; iter < max_iter; iter++) {
+        // n^2 is i to j...
+        for (i = 0; i < K; i++) {
+            for (j = 0; j < K; j++) {
+                sum = 0.0;
+                //for (k = 0; k < 10; k++) {
+                //let's write it explicitly
+                sum += A[i][j][0] * x[i + 1][j - 1]; // A[i][j][0] is left bottom.
+                sum += A[i][j][1] * x[i + 1][j];     // A[i][j][1] is bottom.
+                sum += A[i][j][2] * x[i + 1][j + 1]; // A[i][j][2] is right bottom.
+                sum += A[i][j][3] * x[i][j - 1];     // A[i][j][3] is left.
+                sum += A[i][j][5] * x[i][j + 1];     // A[i][j][5] is right.
+                sum += A[i][j][6] * x[i - 1][j - 1]; // A[i][j][6] is left top.
+                sum += A[i][j][7] * x[i - 1][j];     // A[i][j][7] is top.
+                sum += A[i][j][8] * x[i - 1][j + 1]; // A[i][j][8] is top right.
+                //}
+                aii_r = 1.0 / A[i][j][4];
+                x[i][j] = aii_r * (b[i][j] - sum);
+            }
+        }
+    }
+}
+
+
+/**
+ * @brief Iterative matrix Ax=b solver in Gauss-Seidel method suitable for only kershaw scheme.
+ * iter = maximum number of iterations
+ * k * l = size of matrix, and vectors
+ * epsilon accuaracy requiremnt
+ * A the matrix size 10 * k * l
+ * x pointer to the the solved vector.
+ * b pointer to the vector
+ * input is a pointer to the matrix
+ * 
+ */
+void jacobi_method_naive(int max_iter, int K, int L, double epsilon, double ***A, double **x, double **b) {
+    int i, j, iter;
+    double sum;
+    double aii_r;
+    double ** x_prev;
+    x_prev = malloc_2d(K + 1, L + 1);
+    double **tmp;
+    for (i = 0; i < K; i++){
+        for (j = 0; j < L; j++) {
+            x_prev[i][j] = x[i][j];
+        }
+    }
+ 
+    for (iter = 0; iter < max_iter; iter++) {
+        // n^2 is i to j...
+        for (i = 1; i < K; i++) {
+            for (j = 1; j < L; j++) {
+                sum = 0.0;
+                //for (k = 0; k < 10; k++) {
+                //let's write it explicitly
+                sum += A[i - 1][j - 1][0] * x_prev[i + 1][j - 1]; // A[i][j][0] is left bottom.
+                sum += A[i - 1][j - 1][1] * x_prev[i + 1][j];     // A[i][j][1] is bottom.
+                sum += A[i - 1][j - 1][2] * x_prev[i + 1][j + 1]; // A[i][j][2] is right bottom.
+                sum += A[i - 1][j - 1][3] * x_prev[i][j - 1];     // A[i][j][3] is left.
+                sum += A[i - 1][j - 1][5] * x_prev[i][j + 1];     // A[i][j][5] is right.
+                sum += A[i - 1][j - 1][6] * x_prev[i - 1][j - 1]; // A[i][j][6] is left top.
+                sum += A[i - 1][j - 1][7] * x_prev[i - 1][j];     // A[i][j][7] is top.
+                sum += A[i - 1][j - 1][8] * x_prev[i - 1][j + 1]; // A[i][j][8] is top right.
+                //}
+                aii_r = 1.0 / A[i - 1][j - 1][4];
+                
+                x[i][j] = aii_r * (b[i - 1][j - 1] - sum);
+                printf("%10e\t",x[i][j]);
+            }
+        }
+        printf("\n");
+        if (converge(K, L, epsilon, x_prev, x)) {
+            free_2d(x_prev, K);
+            return;
+        }
+        tmp = x_prev;
+        x_prev = x;
+        x = tmp;
+    }
+    free_2d(x_prev, K);
+}
+
+int converge(int K, int L, double epsilon, double **x_prev, double** x_current) {
+    int i, j;
+    double diff,sqdiff = 0.0;
+    for (i = 0; i < K; i++) {
+        for (j = 0; j < L; j++) {
+            diff = x_prev[i][j] - x_current[i][j];
+            sqdiff += diff * diff;
+        }
+    }
+    if (sqdiff > epsilon) {
+        return 0;
+    } else {
+        return 1;
     }
 }

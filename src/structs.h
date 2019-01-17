@@ -70,4 +70,16 @@ typedef struct Problem {
     struct Time time;
 }Problem;
 
+/***
+ * @brief The Constants defined in the problem
+ * 
+ */
+typedef struct Constants {
+    double a_rad;
+    double pi;
+    double sigma_boltzman;
+    double c_light;
+    
+}Constants;
+
 #endif

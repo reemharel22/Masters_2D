@@ -83,6 +83,7 @@ void init_python(Problem*p) {
     }
     Py_Finalize();
 }
+
 /**
  * @brief initializes all of the structures
  * First it goes to another function that initialize a python interpeter
