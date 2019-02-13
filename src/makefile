@@ -3,13 +3,16 @@ CFLAGS := -fopenmp -I/usr/include/python2.7 -I/usr/include/x86_64-linux-gnu/pyth
 LDFLAGS := -lm -L/usr/lib/python2.7/config-x86_64-linux-gnu -L/usr/lib -lpython2.7 -lpthread -ldl  -lutil -lm  -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions
 DEPS := utils.o problem.o initialize.o
 
-all: test
+all: main
 
 main: main.c $(DEPS) structs.h
 	$(CC) $(CFLAGS) $(DEPS) main.c -o main.o $(LDFLAGS)
 
 initialize: structs.h initialize.c initialize.h
 	$(CC) $(CFLAGS) initialize.c -o initialize.o $(LDFLAGS)  
+
+calculation: calculations.c calculations.h struct.h
+	$(CC) $(CFLAGS) calculations.c -o calcualtions.o $(LDFLAGS)
 
 utils: utils.c utils.h
 	$(CC) -c -o utils.o utils.c $(CFLAGS)

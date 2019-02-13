@@ -12,12 +12,15 @@
  * updates the cycle and the time passed.
  */
 int update_time(Time *t){
-    if (t->time_passed == t->time_stop) {
+    if (t->time_passed >= t->time_stop) {
         return 1;
     }
+    exit(1);
     t->cycle += 1;
     t->time_passed += t->dt;
-    printf("Ended time step number %d\n",t->cycle);
+    if (t->cycle % 1000 == 0) {
+        printf("Ended time step number %d\n",t->cycle);
+    }
     return 0;
 }
 
@@ -40,15 +43,15 @@ void do_timestep(Problem *p) {
  * 4. Calculates small sigma and small lambda.
  * 5. Calculates the matrix A by 17a-17f.
  */
-double ***build_matrix_A(Coordinate *coor, Volume *vol,Diff_Coeff *diff, double dt) {
+double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
     int i = 0,j = 0,k;
 
     int K_max = coor->K_max, L_max = coor->L_max, KC_max = vol->KC_max, LC_max = vol->LC_max;
         
-    double **volume = vol->volume;
+    double **volume = vol->values;
     double **R = coor->R;
     double **Z = coor->Z;
-    double **D = diff->D;
+    double **D = diff->values;
 
     double RK_KL[K_max][L_max];
     double RL_KL[K_max][L_max];
@@ -207,3 +210,6 @@ void apply_boundary(double **data, int n, int m) {
     //boundary condition number (5)
     //if (i,j) real and (i +1,j) imaginary with escape
 }
+
+
+

@@ -3,8 +3,8 @@
 #from distutils.extension import Extension
 #from Cython.Distutils import build_ext
 from distutils.core import setup, Extension
-setup(name="noddy", version="1.0",
-      ext_modules=[Extension("noddy2", ["noddy.c"])])
+setup(name="input", version="1.0",
+      ext_modules=[Extension("df", ["datafile.c"])])
 
 #extensions = Extension("input1", sources=["input1.pyx", "initialize.c"])
 #ext_modules = [

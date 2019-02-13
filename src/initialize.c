@@ -3,7 +3,7 @@
 #include "utils.h"
 #include "initialize.h"
 #include "python2.7/Python.h"
-#include "noddy.c"
+#include "datafile.c"
 /**
  * @file initialize.c
  */
@@ -13,10 +13,8 @@
  */
 void init_python(Problem*p) {
     PyObject *pName, *pModule, *pFunc;
-    PyObject * pValue;
-    int argc = 3;
     char *argv[3] = {"call","input","test"};
-    Noddy *n = 0;
+    Datafile *n = 0;
 
     /* Error checking of pName left out */
     Py_Initialize();
@@ -55,7 +53,8 @@ void init_python(Problem*p) {
                 p->time.t0 = n->t0;
                 p->time.dt = n->dt;
                 p->time.time_stop = n->time_stop;
-                Noddy_dealloc(n);
+                p->diag.time_print = n->time_diagnostic;
+                Datafile_dealloc(n);
                 Py_DECREF(n);
                // Py_DECREF(pArgs);
 
@@ -65,7 +64,7 @@ void init_python(Problem*p) {
                 Py_DECREF(pModule);
                 PyErr_Print();
                 fprintf(stderr,"Call failed\n");
-                return;
+                exit(1);
             }
         }
         else {
@@ -79,7 +78,8 @@ void init_python(Problem*p) {
     else {
         PyErr_Print();
         fprintf(stderr, "Failed to load \"%s\"\n", argv[1]);
-        return;
+        Py_Finalize();  
+        exit(1);
     }
     Py_Finalize();
 }
@@ -102,15 +102,15 @@ void init(Problem*p) {
     // AND TO CELL QUANTITY + 2 ASWELL (EACH)
     K_max = p->coor.K_max += 2;
     L_max = p->coor.L_max += 2;
-    KC_max = p->diff_coeff.KC_max = p->eng.KC_max = p->vol.KC_max += 2;
-    LC_max = p->diff_coeff.LC_max = p->eng.LC_max = p->vol.LC_max += 2;
+    KC_max = p->diff_coeff.KC_max = p->energy.KC_max = p->vol.KC_max += 2;
+    LC_max = p->diff_coeff.LC_max = p->energy.LC_max = p->vol.LC_max += 2;
 
     //malloc
     p->coor.R = malloc_2d(K_max, L_max );
     p->coor.Z = malloc_2d(K_max, L_max );
 
-    p->eng.E_current = malloc_2d(KC_max, LC_max );
-    p->eng.E_old     = malloc_2d(KC_max, LC_max );
+    p->energy.current = malloc_2d(KC_max, LC_max );
+    p->energy.prev    = malloc_2d(KC_max, LC_max );
 
     p->vol.volume = malloc_2d(KC_max, LC_max);
     
@@ -120,12 +120,16 @@ void init(Problem*p) {
     p->time.cycle = 0;
     p->time.time_passed = p->time.t0;
 
+    printf("Init done, with the following parameters:\n");
+    printf("Time finish: %10e. Time start: %10e\n", p->time.time_passed, p->time.t0);
+    printf("Diagnostic every: %10e time passed\n", p->diag.time_print);
+
     //init
     init_mesh_Kershaw1(p->coor.K_max,p->coor.L_max,p->coor.R,p->coor.Z);
 
     for ( i = 0 ; i < KC_max; i++) {
         for (j = 0 ; j < LC_max; j++) {
-             p->eng.E_current[i][j] = 0;
+             p->energy.current[i][j] = 0;
         }
     }
 

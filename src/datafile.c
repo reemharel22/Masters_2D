@@ -9,45 +9,48 @@ typedef struct {
     int lc_max;
     double dt;
     double t0;
+    double time_diagnostic;
     double time_stop;
-} Noddy;
+} Datafile;
 
 static void
-Noddy_dealloc(Noddy* self)
+Datafile_dealloc(Datafile* self)
 {
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static PyObject *
-Noddy_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+Datafile_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    Noddy *self;
+    Datafile *self;
 
-    self = (Noddy *)type->tp_alloc(type, 0);
+    self = (Datafile *)type->tp_alloc(type, 0);
     self->k_max  = 0;
     self->l_max  = 0;
     self->kc_max = 0;
     self->lc_max = 0;
-    self->time_stop =0;
+    self->time_stop = 0;
     self->dt = 0;
     self->t0 = 0;
+    self->time_diagnostic = 0.0;
 
     return (PyObject *)self;
 }
 
 static int
-Noddy_init(Noddy *self, PyObject *args, PyObject *kwds)
+Datafile_init(Datafile *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"first", "last", "number", NULL};
 
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|iiiiddd", kwlist,
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|iiiidddd", kwlist,
                                       &self->k_max,
                                       &self->l_max,
                                       &self->kc_max,
                                       &self->lc_max,
                                       &self->time_stop,
                                       &self->dt,
-                                      &self->t0
+                                      &self->t0,
+				                      &self->time_diagnostic
                                       ))
         return -1;
 
@@ -56,44 +59,46 @@ Noddy_init(Noddy *self, PyObject *args, PyObject *kwds)
 }
 
 
-static PyMemberDef Noddy_members[] = {
-    {"k_max", T_INT, offsetof(Noddy, k_max), 0,
+static PyMemberDef Datafile_members[] = {
+    {"k_max", T_INT, offsetof(Datafile, k_max), 0,
      "k_max"},
-    {"l_max", T_INT, offsetof(Noddy, l_max), 0,
+    {"l_max", T_INT, offsetof(Datafile, l_max), 0,
      "l_max"},
-     {"kc_max", T_INT, offsetof(Noddy, kc_max), 0,
+     {"kc_max", T_INT, offsetof(Datafile, kc_max), 0,
      "xx"},
-    {"lc_max", T_INT, offsetof(Noddy, lc_max), 0,
+    {"lc_max", T_INT, offsetof(Datafile, lc_max), 0,
      "lc_max"},
-     {"dt", T_DOUBLE, offsetof(Noddy, dt), 0,
+     {"dt", T_DOUBLE, offsetof(Datafile, dt), 0,
      "dt"},
-     {"time_stop", T_DOUBLE, offsetof(Noddy, time_stop), 0,
+     {"time_stop", T_DOUBLE, offsetof(Datafile, time_stop), 0,
      "time_stop"},
-     {"t0", T_DOUBLE, offsetof(Noddy, t0), 0,
+     {"t0", T_DOUBLE, offsetof(Datafile, t0), 0,
      "t0"},
+     {"time_diagnostic", T_DOUBLE, offsetof(Datafile, time_diagnostic), 0,
+     "time_diagnostic"},
     {NULL}  /* Sentinel */
 };
 
 static PyObject *
-Noddy_name(Noddy* self)
+Datafile_name(Datafile* self)
 {
 
     return NULL;
 }
 
-static PyMethodDef Noddy_methods[] = {
-    {"name", (PyCFunction)Noddy_name, METH_NOARGS,
+static PyMethodDef Datafile_methods[] = {
+    {"name", (PyCFunction)Datafile_name, METH_NOARGS,
      "Return the name, combining the first and last name"
     },
     {NULL}  /* Sentinel */
 };
 
-static PyTypeObject NoddyType = {
+static PyTypeObject DatafileType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "noddy.Noddy",             /* tp_name */
-    sizeof(Noddy),             /* tp_basicsize */
+    "datafile.Datafile",             /* tp_name */
+    sizeof(Datafile),             /* tp_basicsize */
     0,                         /* tp_itemsize */
-    (destructor)Noddy_dealloc, /* tp_dealloc */
+    (destructor)Datafile_dealloc, /* tp_dealloc */
     0,                         /* tp_print */
     0,                         /* tp_getattr */
     0,                         /* tp_setattr */
@@ -110,24 +115,24 @@ static PyTypeObject NoddyType = {
     0,                         /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT |
         Py_TPFLAGS_BASETYPE,   /* tp_flags */
-    "Noddy objects",           /* tp_doc */
+    "Datafile objects",           /* tp_doc */
     0,                         /* tp_traverse */
     0,                         /* tp_clear */
     0,                         /* tp_richcompare */
     0,                         /* tp_weaklistoffset */
     0,                         /* tp_iter */
     0,                         /* tp_iternext */
-    Noddy_methods,             /* tp_methods */
-    Noddy_members,             /* tp_members */
+    Datafile_methods,             /* tp_methods */
+    Datafile_members,             /* tp_members */
     0,                         /* tp_getset */
     0,                         /* tp_base */
     0,                         /* tp_dict */
     0,                         /* tp_descr_get */
     0,                         /* tp_descr_set */
     0,                         /* tp_dictoffset */
-    (initproc)Noddy_init,      /* tp_init */
+    (initproc)Datafile_init,      /* tp_init */
     0,                         /* tp_alloc */
-    Noddy_new,                 /* tp_new */
+    Datafile_new,                 /* tp_new */
 };
 
 static PyMethodDef module_methods[] = {
@@ -138,19 +143,19 @@ static PyMethodDef module_methods[] = {
 #define PyMODINIT_FUNC void
 #endif
 PyMODINIT_FUNC
-initnoddy2(void)
+initdf(void)
 {
     PyObject* m;
 
-    if (PyType_Ready(&NoddyType) < 0)
+    if (PyType_Ready(&DatafileType) < 0)
         return;
 
-    m = Py_InitModule3("noddy2", module_methods,
+    m = Py_InitModule3("df", module_methods,
                        "Example module that creates an extension type.");
 
     if (m == NULL)
         return;
 
-    Py_INCREF(&NoddyType);
-    PyModule_AddObject(m, "Noddy", (PyObject *)&NoddyType);
+    Py_INCREF(&DatafileType);
+    PyModule_AddObject(m, "Datafile", (PyObject *)&DatafileType);
 }
