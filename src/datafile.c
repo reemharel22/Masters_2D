@@ -7,10 +7,22 @@ typedef struct {
     int l_max;
     int kc_max;
     int lc_max;
+    int bc_type;
     double dt;
     double t0;
     double time_diagnostic;
     double time_stop;
+    double a_rad;
+    double sigma_boltzman;
+    double c;
+    double g;
+    double f;
+    double alpha;
+    double beta;
+    double lambda1;
+    double mu;
+    double T0;
+
 } Datafile;
 
 static void
@@ -33,7 +45,17 @@ Datafile_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     self->dt = 0;
     self->t0 = 0;
     self->time_diagnostic = 0.0;
-
+    self->a_rad = 0.0;
+    self->sigma_boltzman = 0.0;
+    self->c = 0.0;
+    self->g = 0.0;
+    self->f = 0.0;
+    self->alpha = 0.0;
+    self->beta = 0.0;
+    self->lambda1 = 0.0;
+    self->mu = 0.0;
+    self->T0 = 0.0;
+    self->bc_type = 0;
     return (PyObject *)self;
 }
 
@@ -43,14 +65,25 @@ Datafile_init(Datafile *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"first", "last", "number", NULL};
 
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "|iiiidddd", kwlist,
-                                      &self->k_max,
-                                      &self->l_max,
-                                      &self->kc_max,
-                                      &self->lc_max,
-                                      &self->time_stop,
-                                      &self->dt,
-                                      &self->t0,
-				                      &self->time_diagnostic
+                                        &self->k_max,
+                                        &self->l_max,
+                                        &self->kc_max,
+                                        &self->lc_max,
+                                        &self->time_stop,
+                                        &self->dt,
+                                        &self->t0,
+                                        &self->time_diagnostic,
+                                        &self->a_rad,
+                                        &self->sigma_boltzman,
+                                        &self->c,
+                                        &self->g,
+                                        &self->f,
+                                        &self->alpha,
+                                        &self->beta,
+                                        &self->lambda1,
+                                        &self->mu,
+                                        &self->T0,
+                                        &self->bc_type
                                       ))
         return -1;
 
@@ -68,6 +101,8 @@ static PyMemberDef Datafile_members[] = {
      "xx"},
     {"lc_max", T_INT, offsetof(Datafile, lc_max), 0,
      "lc_max"},
+      {"bc_type", T_INT, offsetof(Datafile, bc_type), 0,
+     "bc_type"},
      {"dt", T_DOUBLE, offsetof(Datafile, dt), 0,
      "dt"},
      {"time_stop", T_DOUBLE, offsetof(Datafile, time_stop), 0,
@@ -76,6 +111,26 @@ static PyMemberDef Datafile_members[] = {
      "t0"},
      {"time_diagnostic", T_DOUBLE, offsetof(Datafile, time_diagnostic), 0,
      "time_diagnostic"},
+     {"a_rad", T_DOUBLE, offsetof(Datafile, a_rad), 0,
+     "a_rad"},
+     {"sigma_boltzman", T_DOUBLE, offsetof(Datafile, sigma_boltzman), 0,
+     "sigma_boltzman"},
+     {"c", T_DOUBLE, offsetof(Datafile, c), 0,
+     "c"},
+     {"g", T_DOUBLE, offsetof(Datafile, g), 0,
+     "g"},
+     {"f", T_DOUBLE, offsetof(Datafile, f), 0,
+     "f"},
+     {"alpha", T_DOUBLE, offsetof(Datafile, alpha), 0,
+     "alpha"},
+     {"beta", T_DOUBLE, offsetof(Datafile, beta), 0,
+     "beta"},
+     {"lambda1", T_DOUBLE, offsetof(Datafile, lambda1), 0,
+     "lambda1"},
+     {"mu", T_DOUBLE, offsetof(Datafile, mu), 0,
+     "mu"},
+     {"T0", T_DOUBLE, offsetof(Datafile, T0), 0,
+     "T0"},
     {NULL}  /* Sentinel */
 };
 

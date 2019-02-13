@@ -1,5 +1,4 @@
 #include "calculations.h"
-#include "utils.h"
 #include "math.h"
 
 /**
@@ -28,4 +27,27 @@ void calculate_temperature(Quantity *T, Quantity *E, Constants *consts, Data *op
         }
     }
     return;
+}
+
+/**
+ * Calculates the Opacity by rossland.
+ * sigma = kappa * rho
+ * 
+*/
+void calculate_opacity(Data *opacity,Data *rho, Quantity *T, Constants * consts) {
+    int i, j;
+    int X = T->KC_max;
+    int Y = T->LC_max;
+    double g = consts->g;
+    double alpha = consts->alpha;
+    double lambda = consts->lambda;
+    double **temp = T->current;
+    double **density = rho->values;
+    double **opac = opacity->values;
+
+    for (i = 0; i < X; i++) {
+        for (j = 0; j < Y; j++) {
+            opac[i][j] =  pow(density[i][j], lambda + 2.0) / (g * pow(temp[i][j], alpha));
+        }
+    }
 }

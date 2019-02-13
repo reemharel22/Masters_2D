@@ -1,6 +1,7 @@
 #include "problem.h"
 #include "utils.h"
 #include "math.h"
+
 /**
  * @file problem.c
  */
@@ -177,7 +178,7 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
     return A;
 }
 
-void apply_boundary(double **data, int n, int m) {
+void apply_boundary(double **data, int boundary_type, int n, int m) {
     int i, j;
     //TODO check what does it mean n*n*RK?????
     //TODO tell shay, as oppose to the paper. i calculate it like "them"

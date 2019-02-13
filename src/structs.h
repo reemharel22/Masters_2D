@@ -59,7 +59,13 @@ typedef struct Constants {
     double pi;
     double sigma_boltzman;
     double c_light;
-    
+    double alpha;
+    double lambda;
+    double beta;
+    double mu;
+    double g;
+    double f;
+    double T0;
 } Constants;
 
 /***
@@ -78,15 +84,18 @@ typedef struct Diagnostics {
  * 
  */
 typedef struct Problem {
-    struct Diff_Coeff diff_coeff;
-    struct Volume vol;
+    struct Data diff_coeff;
+    struct Data vol;
+    struct Data rho;
     struct Quantity energy;
     struct Quantity temp;
     struct Coordinate coor;
+    struct Constants constants;
     struct Diagnostics diag;
     struct Data opacity;
     struct Data heat_cap;
     struct Time time;
+    int boundary_type;
 }Problem;
 
 #endif

@@ -42,7 +42,7 @@ void init_python(Problem*p) {
                 PyTuple_SetItem(pArgs, i, pValue);
             }*/
 
-            n = PyObject_CallObject(pFunc, 0);
+            n =(Datafile*) PyObject_CallObject(pFunc, 0);
             //pValue = PyObject_CallObject(pFunc, pArgs);
             //PyArg_ParseTupleAndKeywords(Pva)
             if (n != NULL) {
@@ -54,6 +54,17 @@ void init_python(Problem*p) {
                 p->time.dt = n->dt;
                 p->time.time_stop = n->time_stop;
                 p->diag.time_print = n->time_diagnostic;
+                p->constants.a_rad = n->a_rad;
+                p->constants.sigma_boltzman = n->sigma_boltzman;
+                p->constants.c_light = n->c;
+                p->constants.g = n->g;
+                p->constants.f = n->f; 
+                p->constants.alpha = n->alpha;
+                p->constants.beta = n->beta;
+                p->constants.lambda = n->lambda1;
+                p->constants.mu = n->mu; 
+                p->constants.T0 = n->T0;
+                p->boundary_type = n->bc_type;
                 Datafile_dealloc(n);
                 Py_DECREF(n);
                // Py_DECREF(pArgs);
@@ -94,7 +105,6 @@ void init_python(Problem*p) {
  */
 void init(Problem*p) {
     int i,j;
-    double **R,**Z,**E,**E_o;
     int K_max,L_max,KC_max,LC_max;
     init_python(p);
     // WE HAVE IMAGINARY CELLS. SO WE NEED TO ADD FOR THE VERTEX QUANT..
@@ -111,10 +121,10 @@ void init(Problem*p) {
 
     p->energy.current = malloc_2d(KC_max, LC_max );
     p->energy.prev    = malloc_2d(KC_max, LC_max );
-
-    p->vol.volume = malloc_2d(KC_max, LC_max);
     
-    p->diff_coeff.D = malloc_2d(KC_max, LC_max);
+    p->vol.values = malloc_2d(KC_max, LC_max);
+    p->rho.values = malloc_2d(KC_max, LC_max);
+    p->diff_coeff.values = malloc_2d(KC_max, LC_max);
 
     //time
     p->time.cycle = 0;
@@ -129,11 +139,12 @@ void init(Problem*p) {
 
     for ( i = 0 ; i < KC_max; i++) {
         for (j = 0 ; j < LC_max; j++) {
-             p->energy.current[i][j] = 0;
+             p->energy.prev[i][j] = p->energy.current[i][j] = 0;
+             p->temp.prev[i][j] = p->temp.current[i][j] = p->constants.T0;
         }
     }
 
-    mesh_square_volume(p->vol.volume, p->coor.R,p->coor.Z,KC_max,LC_max);
+    mesh_square_volume(p->vol.values, p->coor.R,p->coor.Z,KC_max,LC_max);
 
 }
 
@@ -154,12 +165,12 @@ void init_mesh_Kershaw1(int K_max, int L_max, double **R, double **Z) {
 void clean_prog(Problem *p) {
     int K_max = p->coor.K_max;
     int L_max = p->coor.L_max;
-    int KC_max = p->eng.KC_max;
-    int LC_max = p->eng.LC_max;
+    int KC_max = p->energy.KC_max;
+    int LC_max = p->energy.LC_max;
     free_2d(p->coor.R,K_max);
     free_2d(p->coor.Z,K_max);
-    free_2d(p->eng.E_current,KC_max);
-    free_2d(p->eng.E_old,KC_max);
-    free_2d(p->vol.volume,KC_max);
+    free_2d(p->energy.current,KC_max);
+    free_2d(p->energy.prev,KC_max);
+    free_2d(p->vol.values,KC_max);
     //free_3d(A,K_max,L_max);
 }

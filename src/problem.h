@@ -4,7 +4,7 @@
 
 void do_timestep(Problem *p);
 int update_time(Time *t);
-void apply_boundary(double **data, int n, int m);
+void apply_boundary(double **data,int, int n, int m);
 /**
  * @brief Builds the matrix A by Kershaw scheme.
  * @var Coordinate::coor  the coordinates struct.
@@ -19,6 +19,5 @@ void apply_boundary(double **data, int n, int m);
  *           5. Calculates the matrix A by 17a-17f.
  */
 double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt);
-void calculate_temperature(Quantity *T, Quantity *E, Constants *consts, Data *opac, Data *heat_cap, double dt) {
 
 #endif

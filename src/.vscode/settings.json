@@ -11,6 +11,7 @@
         "math.h": "c",
         "python_bridge.h": "c",
         "structmember.h": "c",
-        "python.h": "c"
+        "python.h": "c",
+        "calculations.h": "c"
     }
 }
