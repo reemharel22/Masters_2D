@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "initialize.h"
 #include "python2.7/Python.h"
+#include "diagnostics.h"
 #include "datafile.c"
 /**
  * @file initialize.c
@@ -57,14 +58,9 @@ void init_python(Problem*p) {
                 p->constants.a_rad = n->a_rad;
                 p->constants.sigma_boltzman = n->sigma_boltzman;
                 p->constants.c_light = n->c;
-                p->constants.g = n->g;
-                p->constants.f = n->f; 
-                p->constants.alpha = n->alpha;
-                p->constants.beta = n->beta;
-                p->constants.lambda = n->lambda1;
-                p->constants.mu = n->mu; 
                 p->constants.T0 = n->T0;
                 p->boundary_type = n->bc_type;
+                p->mats.num_mats = n->num_mats;
                 Datafile_dealloc(n);
                 Py_DECREF(n);
                // Py_DECREF(pArgs);
@@ -95,6 +91,89 @@ void init_python(Problem*p) {
     Py_Finalize();
 }
 
+/*
+* @brief Initializes the materials thro python
+*/
+void init_materials_python(Material *m, int mat_number) {
+    PyObject *pName, *pModule, *pFunc;
+    char* argv[3] = {"call", "input", "material1"}; 
+    if (mat_number == 1) {
+        argv[2] = "material2";    
+    }
+    Datafile *n = 0;
+    /* Error checking of pName left out */
+    Py_Initialize();
+    PyRun_SimpleString("import sys");
+    PyRun_SimpleString("sys.path.append(\".\")");
+
+    pName = PyString_FromString(argv[1]);
+    pModule = PyImport_Import(pName);
+    Py_DECREF(pName);
+
+    if (pModule != NULL) {
+        pFunc = PyObject_GetAttrString(pModule, argv[2]);
+        /* pFunc is a new reference */
+    
+        if (pFunc && PyCallable_Check(pFunc)) {
+           /* pArgs = PyTuple_New(argc - 3);
+            for (i = 0; i < argc - 3; ++i) {
+                pValue = PyInt_FromLong(atoi(argv[i + 3]));
+                if (!pValue) {
+                    Py_DECREF(pArgs);
+                    Py_DECREF(pModule);
+                    fprintf(stderr, "Cannot convert argument\n");
+                    return 1;
+                }
+                PyTuple_SetItem(pArgs, i, pValue);
+            }*/
+
+            n = (Datafile*) PyObject_CallObject(pFunc, 0);
+            //pValue = PyObject_CallObject(pFunc, pArgs);
+            //PyArg_ParseTupleAndKeywords(Pva)
+            if (n != NULL) {
+                m->alpha = n->alpha; // !< ALpha, related to kappa rossland
+                m->lambda = n->lambda1; // !< Lambda related to cv
+                m->beta = n->beta; // !< BEta related to rossaland
+                m->mu = n->mu; // !< Mu related to rossland
+                m->g = n->g;  //!< g Related to rossland
+                m->f = n->f; // !< f related to rossland
+                m->i_start = n->i_start;
+                m->i_end = n->i_end;
+                m->j_start = n->j_start;
+                m->j_end = n->j_end;
+                printf("%10e\n",n->alpha);
+                Datafile_dealloc(n);
+                printf("?\n");
+                Py_DECREF(n);
+               // Py_DECREF(pArgs);
+
+            }
+            else {
+                Py_DECREF(pFunc);
+                Py_DECREF(pModule);
+                PyErr_Print();
+                fprintf(stderr,"Call failed\n");
+                exit(1);
+            }
+        }
+        else {
+            if (PyErr_Occurred())
+                PyErr_Print();
+            fprintf(stderr, "Cannot find function \"%s\"\n", argv[2]);
+        }
+        Py_XDECREF(pFunc);
+        Py_DECREF(pModule);
+    }
+    else {
+        PyErr_Print();
+        fprintf(stderr, "Failed to load \"%s\"\n", argv[1]);
+        Py_Finalize();  
+        exit(1);
+    }
+    
+    Py_Finalize();
+}
+
 /**
  * @brief initializes all of the structures
  * First it goes to another function that initialize a python interpeter
@@ -103,10 +182,19 @@ void init_python(Problem*p) {
  * Third, we allocate the memory.
  * Fourth initialize values.
  */
-void init(Problem*p) {
-    int i,j;
+void init(Problem *p) {
+    int i, j;
     int K_max,L_max,KC_max,LC_max;
     init_python(p);
+    printf("Done init part 1\n");
+    p->mats.mat = (Material *) malloc(sizeof(Material) * p->mats.num_mats);
+    for (i = 0; i < p->mats.num_mats; i++) {
+        init_materials_python(&p->mats.mat[i], i);
+            printf("Done init part 2\n");
+
+    }
+    
+    
     // WE HAVE IMAGINARY CELLS. SO WE NEED TO ADD FOR THE VERTEX QUANT..
     // + 2 (right and left edge)
     // AND TO CELL QUANTITY + 2 ASWELL (EACH)
@@ -145,7 +233,8 @@ void init(Problem*p) {
     }
 
     mesh_square_volume(p->vol.values, p->coor.R,p->coor.Z,KC_max,LC_max);
-
+    diagnostics_initial(p);
+    exit(1);
 }
 
 void init_mesh_Kershaw1(int K_max, int L_max, double **R, double **Z) {

@@ -3,7 +3,7 @@
 #include "structs.h"
 
 void do_timestep(Problem *p);
-int update_time(Time *t);
+int update_time(Time *t, Quantity *T);
 void apply_boundary(double **data,int, int n, int m);
 /**
  * @brief Builds the matrix A by Kershaw scheme.

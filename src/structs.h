@@ -43,31 +43,51 @@ typedef struct Coordinate {
  */
 typedef struct Time {
     double dt;//!< Size of time step.
+    double dt_max; // !< Max Dt.
     double t0;//!< Initial time.
     double time_passed;//!< time passed until this cycle.
     double time_stop;//!< time should stop the calculation.
     int cycle;       //!< number of cycle
-}Time;
+    double dt_factor; // !< Dt_factor, related to update time
+} Time;
 
 
 /***
- * @brief The Constants defined in the problem
+ * @brief The Constants defined in the problem in cgs !
  * 
  */
 typedef struct Constants {
-    double a_rad;
-    double pi;
-    double sigma_boltzman;
-    double c_light;
-    double alpha;
-    double lambda;
-    double beta;
-    double mu;
-    double g;
-    double f;
-    double T0;
+    double a_rad; //!< a radiation constant
+    double c_light; //!< Speed of light
+    double sigma_boltzman; //!< Sigma boltzmann
+    double T0;//!< Initial temperature.
 } Constants;
 
+/**
+ * @brief The Material structs, holds the relevant parameters to the material.
+ * The only place where this is relevant is the Cv and Opacity calculation.
+*/
+typedef struct Material {
+    double alpha; // !< ALpha, related to kappa rossland
+    double lambda; // !< Lambda related to cv
+    double beta; // !< BEta related to rossaland
+    double mu; // !< Mu related to rossland
+    double g;  //!< g Related to rossland
+    double f; // !< f related to rossland
+    int i_start;
+    int i_end;
+    int j_start;
+    int j_end;
+} Material;
+
+/**
+ * @brief The Material structs, holds the relevant parameters to the material.
+ * The only place where this is relevant is the Cv and Opacity calculation.
+*/
+typedef struct Materials {
+    int num_mats; //!< How many materials.
+    Material *mat; //!< Material array.
+} Materials;
 /***
  * @brief The diagnostics parameters defined in the problem
  * 
@@ -85,6 +105,7 @@ typedef struct Diagnostics {
  */
 typedef struct Problem {
     struct Data diff_coeff;
+    struct Materials mats; 
     struct Data vol;
     struct Data rho;
     struct Quantity energy;

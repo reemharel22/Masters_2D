@@ -8,6 +8,11 @@ typedef struct {
     int kc_max;
     int lc_max;
     int bc_type;
+    int num_mats;
+    int i_start;
+    int i_end;
+    int j_start;
+    int j_end;
     double dt;
     double t0;
     double time_diagnostic;
@@ -17,12 +22,13 @@ typedef struct {
     double c;
     double g;
     double f;
+    double dt_max;
     double alpha;
     double beta;
     double lambda1;
     double mu;
     double T0;
-
+    double dt_factor;
 } Datafile;
 
 static void
@@ -41,6 +47,12 @@ Datafile_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     self->l_max  = 0;
     self->kc_max = 0;
     self->lc_max = 0;
+    self->num_mats = 0;
+    self->i_start = 0;
+    self->i_end = 0;
+    self->j_start = 0;
+    self->j_end = 0;
+    self->bc_type = 0;
     self->time_stop = 0;
     self->dt = 0;
     self->t0 = 0;
@@ -55,7 +67,9 @@ Datafile_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     self->lambda1 = 0.0;
     self->mu = 0.0;
     self->T0 = 0.0;
-    self->bc_type = 0;
+    self->dt_factor = 0.0;
+    self->dt_max = 0.0;
+
     return (PyObject *)self;
 }
 
@@ -63,12 +77,18 @@ static int
 Datafile_init(Datafile *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"first", "last", "number", NULL};
-
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|iiiidddd", kwlist,
+    
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|iiiiiiiiiiddddddddddddddd", kwlist,
                                         &self->k_max,
                                         &self->l_max,
                                         &self->kc_max,
                                         &self->lc_max,
+                                        &self->num_mats,
+                                        &self->i_start,
+                                        &self->i_end,
+                                        &self->j_start,
+                                        &self->j_end,
+                                        &self->bc_type,
                                         &self->time_stop,
                                         &self->dt,
                                         &self->t0,
@@ -83,7 +103,8 @@ Datafile_init(Datafile *self, PyObject *args, PyObject *kwds)
                                         &self->lambda1,
                                         &self->mu,
                                         &self->T0,
-                                        &self->bc_type
+                                        &self->dt_factor,
+                                        &self->dt_max
                                       ))
         return -1;
 
@@ -103,6 +124,16 @@ static PyMemberDef Datafile_members[] = {
      "lc_max"},
       {"bc_type", T_INT, offsetof(Datafile, bc_type), 0,
      "bc_type"},
+     {"num_mats", T_INT, offsetof(Datafile, num_mats), 0,
+     "num_mats"},
+      {"i_start", T_INT, offsetof(Datafile, i_start), 0,
+     "i_start"},
+      {"i_end", T_INT, offsetof(Datafile, i_end), 0,
+     "i_end"},
+      {"j_start", T_INT, offsetof(Datafile, j_start), 0,
+     "j_start"},
+      {"j_end", T_INT, offsetof(Datafile, j_end), 0,
+     "j_end"},
      {"dt", T_DOUBLE, offsetof(Datafile, dt), 0,
      "dt"},
      {"time_stop", T_DOUBLE, offsetof(Datafile, time_stop), 0,
@@ -131,6 +162,10 @@ static PyMemberDef Datafile_members[] = {
      "mu"},
      {"T0", T_DOUBLE, offsetof(Datafile, T0), 0,
      "T0"},
+     {"dt_factor", T_DOUBLE, offsetof(Datafile, dt_factor), 0,
+     "dt_factor"},
+     {"dt_max", T_DOUBLE, offsetof(Datafile, dt_max), 0,
+     "dt_max"},
     {NULL}  /* Sentinel */
 };
 

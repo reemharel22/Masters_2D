@@ -11,24 +11,66 @@
  * @param t The Time struct.
  * checks if we got to the end time of the execution.
  * updates the cycle and the time passed.
+ * aswell as calculates the new value of T
  */
-int update_time(Time *t){
+int update_time(Time *t, Quantity *T) {
+    double ** temp_curr = T->current;
+    double ** temp_prev = T->prev;
+    int X = T->KC_max;
+    int Y = T->LC_max;
+    double T1, T2, max_T = 0, min_T = 0, delta_temp, dt_tag, tmp = 0;
+    int i, j;
+    
     if (t->time_passed >= t->time_stop) {
         return 1;
     }
-    exit(1);
+
+    for (i = 1; i < X; i++) {
+        for (j = 1; j < Y; j++) {
+            T1 = T->current[i][j];
+            if (T1 > max_T) {
+                max_T = T1;
+            }
+        }
+    }
+    
+    min_T = (190 * 11605) * 1E-3;
+    for (i = 1; i < X; i++) {
+        for (j = 1; j < Y; j++) {
+            T1 = T->current[i][j];
+            T2 = T->prev[i][j];
+            delta_temp = fabs(T2 - T1) / (T2 + min_T);
+            if (delta_temp > tmp) {
+                tmp = delta_temp;
+            }
+        }
+    }
+    dt_tag = t->dt_factor * t->dt / tmp;
+    t->dt = minimum(dt_tag, 1.1*t->dt);
+    if (t->dt > t->dt_max) {
+        t->dt = t->dt_max;
+    }
+
     t->cycle += 1;
     t->time_passed += t->dt;
     if (t->cycle % 1000 == 0) {
         printf("Ended time step number %d\n",t->cycle);
     }
+
     return 0;
 }
 
+/**
+ * @brief the main time step.
+ * 
+ *
+ *  
+ */
 void do_timestep(Problem *p) {
     int i,j;
-    
-    return 0.0;
+    double ***A = build_matrix_A(&p->coor, &p->vol, &p->diff_coeff, p->time.dt);
+        
+    return;
 }
 
 /**

@@ -16,6 +16,8 @@ void free_3d(double ***ptr, int n,int m);
 void print_2d(int K, int L, double **arr);
 void print_3d(int K, int L, int Q, double ***arr);
 void free_1d(double *ptr);
+double minimum(double, double);
+double maximum(double, double);
 double square_volume(double x1, double x2, double y1, double y2);
 void mesh_square_volume(double **volume, double **X, double **Y, int n, int m);
 int converge(int K, int L, double epsilon, double **x_prev, double** x_current);

@@ -284,3 +284,17 @@ int converge(int K, int L, double epsilon, double **x_prev, double** x_current) 
         return 1;
     }
 }
+
+double minimum(double a, double b) {
+    if (a < b) {
+        return a;
+    }
+    return b;
+}
+
+double maximum(double a, double b) {
+    if (a > b) {
+        return a;
+    }
+    return b;
+}

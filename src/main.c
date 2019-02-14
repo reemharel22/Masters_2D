@@ -22,7 +22,7 @@ int main (int argc, char* argv[]) {
     init(&prob);
     do {
         
-    } while( !update_time(&prob.time) );
+    } while( !update_time(&prob.time, &prob.temp) );
     
     clean_prog(&prob);
     return 0;
