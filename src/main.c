@@ -14,6 +14,10 @@
  * after in a do while loop it executes a time step, afterwards 
  * it checks if one should stop.
  * end by cleaning structs.
+ * Some things:
+ * 1. We are saving the init rho although we dont really need to.
+ * 2. Problem holds the whole structs and not points i.e they are all one after another, this might create a problem.
+ * 3. Density can be replacet to a single small array cause it is constant
  */
 
 int main (int argc, char* argv[]) {

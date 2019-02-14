@@ -74,10 +74,11 @@ typedef struct Material {
     double mu; // !< Mu related to rossland
     double g;  //!< g Related to rossland
     double f; // !< f related to rossland
-    int i_start;
-    int i_end;
-    int j_start;
-    int j_end;
+    double init_rho; //!<density of the material
+    int i_start; // !< the i index where this material starts
+    int i_end;   // !< the i index where this material ends.
+    int j_start;//!< the j index where this material starts.
+    int j_end; //!< the j index where this material ends.
 } Material;
 
 /**

@@ -40,21 +40,21 @@ void diagnostics_initial(Problem *p) {
     int i = 0;
     char* f_name = "../data/Initial.txt";
     FILE*fp = fopen(f_name, "w");
-    fprintf(fp, "Time Segment: \n");
-    fprintf(fp, "\tInitial time: %10e.\n Starting dt: %10e.\nDt max: %10e\n", p->time.t0, p->time.dt, p->time.dt_max);
-    fprintf(fp, "\tdt factor: %10e.\n Time finish: %10e.\n\n", p->time.dt_factor, p->time.time_stop);
+    fprintf(fp, "Time Segment: {\n");
+    fprintf(fp, "\tInitial time: %10e.\n\tStarting dt: %10e.\nDt max: %10e\n", p->time.t0, p->time.dt, p->time.dt_max);
+    fprintf(fp, "\tdt factor: %10e.\n\tTime finish: %10e.\n}\n", p->time.dt_factor, p->time.time_stop);
 
-    fprintf(fp, "Materials Segment:\n");
+    fprintf(fp, "Materials Segment: {\n");
     fprintf(fp, "\tNumber of Materials: %d\n", p->mats.num_mats);
     for (i = 0; i < p->mats.num_mats; i++) {
-        fprintf(fp, "\tMaterial number: %d.\n",i);
+        fprintf(fp, "\tMaterial number: %d\n",i);
         fprintf(fp, "\t\tAlpha: %10e.\n",p->mats.mat[i].alpha);
         fprintf(fp, "\t\tBeta: %10e.\n",p->mats.mat[i].beta);
         fprintf(fp, "\t\tmu: %10e.\n",p->mats.mat[i].mu);
         fprintf(fp, "\t\tlambda: %10e.\n",p->mats.mat[i].lambda);
         fprintf(fp, "\t\tf: %10e.\n",p->mats.mat[i].f);
-        fprintf(fp, "\t\tg: %10e.\n",p->mats.mat[i].g);
+        fprintf(fp, "\t\tg: %10e.\n}",p->mats.mat[i].g);
     }
 
-
+    fclose(fp);
 }

@@ -1,7 +1,7 @@
 #include "problem.h"
 #include "utils.h"
 #include "math.h"
-
+#include "calculations.h"
 /**
  * @file problem.c
  */
@@ -62,14 +62,25 @@ int update_time(Time *t, Quantity *T) {
 
 /**
  * @brief the main time step.
- * 
+ * 1. First we calculate the physical properties: Opacity, Diffusion Coefficient and the heat capacity.
  *
  *  
  */
 void do_timestep(Problem *p) {
-    int i,j;
-    double ***A = build_matrix_A(&p->coor, &p->vol, &p->diff_coeff, p->time.dt);
-        
+    int i, j;
+    double ***A, **b;
+    calculate_opacity(&p->opacity, &p->rho, &p->temp, &p->mats);
+    calculate_diffusion_coefficient(&p->diff_coeff, &p->opacity, &p->constants, 0);
+    calculate_heatcapacity(&p->heat_cap, &p->rho, &p->temp, &p->mats);
+
+    apply_boundary(&p->energy.current,p->boundary_type, p->energy.KC_max, p->energy.LC_max);
+
+    A = build_matrix_A(&p->coor, &p->vol, &p->diff_coeff, p->time.dt);
+    b = build_b_vector(&p->energy, &p->temp, &p->opacity, &p->constants, p->time.dt);
+    jacobi_method_naive(1000, p->energy.KC_max, p->energy.LC_max, 1e-10, A, p->energy.current, b);
+
+    free_3d(A, p->energy.KC_max, p->energy.LC_max);
+    free_2d(b, p->energy.LC_max);
     return;
 }
 
@@ -220,6 +231,12 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
     return A;
 }
 
+/**
+ * @brief The first boundary condition we apply is the "1d" effective one.
+ * In which the bottom and top walls are "reflective", the left corner gets 190ev and right corner is 0.
+ * 
+ * 
+*/
 void apply_boundary(double **data, int boundary_type, int n, int m) {
     int i, j;
     //TODO check what does it mean n*n*RK?????
@@ -227,32 +244,48 @@ void apply_boundary(double **data, int boundary_type, int n, int m) {
     //i.e boundary condition is abit different
 
 
-    // boundary condition number (2)
-    //if (i,j) and (i + 1,j) are imaginary. lel
-    //i.e: we know j = 0,m-1 are imaginry. => i= 0...n-1 with j=0,m-1 are the cells we want.
-    // we can unroll for efficiency
+    // TOP WALL - reflective
+    // i and j = m - 1
     for (i = 0; i < n; i++) {
-        data[i][0]     = 0;
-        data[i][m - 1] = 0;
+        data[i][m - 1]     = data[i][m - 2];
     }
 
-    //boundary condition number (3)
-    //if (i,j) real and (i+1,j) imaginry. no escape!
-    //i.e: for i = n-2 and j = 1...m-2 are the cells we want.
-    for (j = 1; j < m - 1; j++) {
+    // Bottom WALL - reflective
+    // i and j = 0
+    for (i = 0; i < n; i++) {
+        data[i][0]     = data[i][1];
+    }
+
+    //RIGHT WALL - leapes
+    for (j = 0; j < m; j++) {
         data[n - 2][j] = 0;
     }
-
-    //boundary condition number (4)
-    //if (i,j) imaginary and (i + 1,j) real. no escape!
-    //i.e: for i = 0 and j= 1..m-2
-    for (j = 1; j < m - 1; j++) {
-        data[0][j] = 0;
+    
+    //LEFT WALL - 190 ev
+    for (j = 0; j < m; j++) {
+        data[0][j] = 190 * 11605;
     }
-
-    //boundary condition number (5)
-    //if (i,j) real and (i +1,j) imaginary with escape
 }
 
-
+/**
+ * @brief Prepares the solution vector b, Ax=b
+ * energy - is the prev energy i.e E(r, t = n), current = n + 1 
+ * 
+*/
+double **build_b_vector(Quantity *E, Quantity *T, Data *opac, Constants *consts, double dt) {
+    int i, j;
+    int X = T->KC_max;
+    int Y = T->LC_max;
+    double c = consts->c_light;
+    double **b = malloc_2d(X, Y);
+    double **energy = E->prev;
+    double **temp = T->prev;
+    double **opacity =  opac->values;
+    for (i = 0; i < X; i++) {
+        for (j = 0; j < Y; j++) {
+            b[i][j] = energy[i][j] + opacity[i][j] * dt * c * temp[i][j];
+        }
+    }
+    return b;
+}
 

@@ -59,6 +59,7 @@ void init_python(Problem*p) {
                 p->constants.sigma_boltzman = n->sigma_boltzman;
                 p->constants.c_light = n->c;
                 p->constants.T0 = n->T0;
+                p->time.dt_factor = n->dt_factor;
                 p->boundary_type = n->bc_type;
                 p->mats.num_mats = n->num_mats;
                 Datafile_dealloc(n);
@@ -141,9 +142,8 @@ void init_materials_python(Material *m, int mat_number) {
                 m->i_end = n->i_end;
                 m->j_start = n->j_start;
                 m->j_end = n->j_end;
-                printf("%10e\n",n->alpha);
+                m->init_rho = n->rho;
                 Datafile_dealloc(n);
-                printf("?\n");
                 Py_DECREF(n);
                // Py_DECREF(pArgs);
 
@@ -186,12 +186,9 @@ void init(Problem *p) {
     int i, j;
     int K_max,L_max,KC_max,LC_max;
     init_python(p);
-    printf("Done init part 1\n");
     p->mats.mat = (Material *) malloc(sizeof(Material) * p->mats.num_mats);
     for (i = 0; i < p->mats.num_mats; i++) {
         init_materials_python(&p->mats.mat[i], i);
-            printf("Done init part 2\n");
-
     }
     
     
@@ -209,6 +206,8 @@ void init(Problem *p) {
 
     p->energy.current = malloc_2d(KC_max, LC_max );
     p->energy.prev    = malloc_2d(KC_max, LC_max );
+    p->temp.current = malloc_2d(KC_max, LC_max );
+    p->temp.prev    = malloc_2d(KC_max, LC_max );
     
     p->vol.values = malloc_2d(KC_max, LC_max);
     p->rho.values = malloc_2d(KC_max, LC_max);
@@ -217,10 +216,6 @@ void init(Problem *p) {
     //time
     p->time.cycle = 0;
     p->time.time_passed = p->time.t0;
-
-    printf("Init done, with the following parameters:\n");
-    printf("Time finish: %10e. Time start: %10e\n", p->time.time_passed, p->time.t0);
-    printf("Diagnostic every: %10e time passed\n", p->diag.time_print);
 
     //init
     init_mesh_Kershaw1(p->coor.K_max,p->coor.L_max,p->coor.R,p->coor.Z);
@@ -233,10 +228,15 @@ void init(Problem *p) {
     }
 
     mesh_square_volume(p->vol.values, p->coor.R,p->coor.Z,KC_max,LC_max);
+    init_density(&p->mats, &p->rho);
     diagnostics_initial(p);
     exit(1);
 }
 
+/**
+ * @brief Initailizes the mesh so that it will have constant delta R and delta Z
+ * 
+ * **/
 void init_mesh_Kershaw1(int K_max, int L_max, double **R, double **Z) {
     int i = 0, j = 0;
     for ( i = 0; i < K_max; i++) {
@@ -244,9 +244,33 @@ void init_mesh_Kershaw1(int K_max, int L_max, double **R, double **Z) {
             R[i][j] = (double) j / (L_max - 1);
         }
     }
+    
     for ( i = 0 ; i < K_max; i++) {
         for (j = 0 ; j < L_max; j++) {
             Z[i][j] = (double) i / (K_max - 1);
+        }
+    }
+}
+
+/*
+* @brief Initalizes the density of the problem.
+*
+**/
+void init_density(Materials *mats, Data *density) {
+    int i_start, i_end, j_start, j_end, k;
+    int i,j ;
+    double init_rho;
+    double **rho = density->values;
+    for (k = 0; k < mats->num_mats; k++) {
+        i_start = mats->mat[k].i_start;
+        i_end = mats->mat[k].i_end;
+        j_start = mats->mat[k].j_start;
+        j_end = mats->mat[k].j_end;
+        init_rho = mats->mat[k].init_rho;
+        for (i = i_start; i < i_end; i++) {
+            for (j = j_start; j < j_end; j++) {
+                rho[i][j] = init_rho;
+            }
         }
     }
 }

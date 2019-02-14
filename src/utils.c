@@ -167,7 +167,7 @@ int n, int m) {
     int i,j;
     for ( i = 0; i < n-1; i++) {
         for (j = 0; j < m-1; j++) {
-            volume[i][j] = square_volume(X[i][j],X[i][j + 1],Y[i][j],Y[i + 1][j]);           
+            volume[i][j] = square_volume(X[i][j],X[i][j + 1],Y[i][j],Y[i + 1][j]);         
         }
     }
 }
@@ -217,7 +217,7 @@ void gauss_seidel_method(int max_iter, int K, int L, double epsilon, double ***A
  * k * l = size of matrix, and vectors
  * epsilon accuaracy requiremnt
  * A the matrix size 10 * k * l
- * x pointer to the the solved vector.
+ * x pointer to the the solution vector.
  * b pointer to the vector
  * input is a pointer to the matrix
  * 

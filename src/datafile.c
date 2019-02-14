@@ -26,6 +26,7 @@ typedef struct {
     double alpha;
     double beta;
     double lambda1;
+    double rho;
     double mu;
     double T0;
     double dt_factor;
@@ -66,6 +67,7 @@ Datafile_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     self->beta = 0.0;
     self->lambda1 = 0.0;
     self->mu = 0.0;
+    self->rho = 0.0;
     self->T0 = 0.0;
     self->dt_factor = 0.0;
     self->dt_max = 0.0;
@@ -78,7 +80,7 @@ Datafile_init(Datafile *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"first", "last", "number", NULL};
     
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|iiiiiiiiiiddddddddddddddd", kwlist,
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|iiiiiiiiiidddddddddddddddd", kwlist,
                                         &self->k_max,
                                         &self->l_max,
                                         &self->kc_max,
@@ -102,6 +104,7 @@ Datafile_init(Datafile *self, PyObject *args, PyObject *kwds)
                                         &self->beta,
                                         &self->lambda1,
                                         &self->mu,
+                                        &self->rho,
                                         &self->T0,
                                         &self->dt_factor,
                                         &self->dt_max
@@ -160,6 +163,8 @@ static PyMemberDef Datafile_members[] = {
      "lambda1"},
      {"mu", T_DOUBLE, offsetof(Datafile, mu), 0,
      "mu"},
+      {"rho", T_DOUBLE, offsetof(Datafile, rho), 0,
+     "rho"},
      {"T0", T_DOUBLE, offsetof(Datafile, T0), 0,
      "T0"},
      {"dt_factor", T_DOUBLE, offsetof(Datafile, dt_factor), 0,
@@ -225,7 +230,7 @@ static PyTypeObject DatafileType = {
     Datafile_new,                 /* tp_new */
 };
 
-static PyMethodDef module_methods[] = {
+static PyMethodDef module_methods1[] = {
     {NULL}  /* Sentinel */
 };
 
@@ -240,7 +245,7 @@ initdf(void)
     if (PyType_Ready(&DatafileType) < 0)
         return;
 
-    m = Py_InitModule3("df", module_methods,
+    m = Py_InitModule3("df", module_methods1,
                        "Example module that creates an extension type.");
 
     if (m == NULL)
