@@ -1,0 +1,11 @@
+g 0.00010899182
+f 8.78E13
+alpha 3.53
+beta 1.1
+lambda 0.75
+mu 0.09
+i_start 0
+i_end = 1001
+rho = 50E-3
+j_start = 0
+j_end = 4

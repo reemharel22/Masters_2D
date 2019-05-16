@@ -23,4 +23,9 @@ void mesh_square_volume(double **volume, double **X, double **Y, int n, int m);
 int converge(int K, int L, double epsilon, double **x_prev, double** x_current);
 void jacobi_method_naive(int max_iter, int K, int L , double epsilon, double ***A, double **x, double **b);
 void gauss_seidel_method(int max_iter, int K, int L, double epsilon, double ***A, double **x, double **b);
+int int_reader(char *str, int len);
+int* int_array_reader(char *str, int len);
+double double_reader(char *str, int len);
+double* double_array_reader(char *str, int len);
+
 #endif

@@ -39,7 +39,7 @@ void calculate_opacity(Data *opacity,Data *rho, Quantity *T, Materials * mats) {
     int i, j, k = 0;
     int X = T->KC_max;
     int Y = T->LC_max;
-    double **temp = T->current;
+    double **temp = T->prev;
     double **density = rho->values;
     double **opac = opacity->values;
     int i_start, i_end, j_start, j_end;
@@ -64,11 +64,11 @@ void calculate_opacity(Data *opacity,Data *rho, Quantity *T, Materials * mats) {
  * @brief Calculates the Heat capacity by taking the derivative of the internal energy in respect of temperature in const volume.
  * 
 */
-void calculate_heatcapacity(Data *heat_cap,Data *rho, Quantity *T, Materials * mats) {
+void calculate_heat_capacity(Data *heat_cap,Data *rho, Quantity *T, Materials * mats) {
     int i, j, k = 0;
     int X = T->KC_max;
     int Y = T->LC_max;
-    double **temp = T->current;
+    double **temp = T->prev;
     double **density = rho->values;
     double **cv = heat_cap->values;
     int i_start, i_end, j_start, j_end;

@@ -87,6 +87,7 @@ typedef struct Material {
 */
 typedef struct Materials {
     int num_mats; //!< How many materials.
+    int mat_type;
     Material *mat; //!< Material array.
 } Materials;
 /***

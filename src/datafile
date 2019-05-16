@@ -1,0 +1,17 @@
+k_max 51
+l_max 4
+kc_max 50
+lc_max 3
+dt 1E-11
+dt_max 1E-11
+dt_factor 2
+t0 0
+time_diagnostic 1E-11
+time_stop 1.5E-9
+sigma_boltzman 5.6704E-5
+c 2.99792458E10
+a_rad 7.5657674E-15
+T0 300
+bc_type 1
+num_mats 1
+mat_type 1

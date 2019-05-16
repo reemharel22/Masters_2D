@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include "utils.h"
 #include "initialize.h"
-#include "python2.7/Python.h"
+//#include "python2.7/Python.h"
 #include "diagnostics.h"
-#include "datafile.c"
+//#include "datafile.c"
 /**
  * @file initialize.c
  */
@@ -13,11 +13,10 @@
  * @brief initializes the structs.
  */
 void init_python(Problem*p) {
-    PyObject *pName, *pModule, *pFunc;
+   /* PyObject *pName, *pModule, *pFunc;
     char *argv[3] = {"call","input","test"};
     Datafile *n = 0;
 
-    /* Error checking of pName left out */
     Py_Initialize();
     PyRun_SimpleString("import sys");
     PyRun_SimpleString("sys.path.append(\".\")");
@@ -30,7 +29,7 @@ void init_python(Problem*p) {
         pFunc = PyObject_GetAttrString(pModule, argv[2]);
         /* pFunc is a new reference */
     
-        if (pFunc && PyCallable_Check(pFunc)) {
+      /*  if (pFunc && PyCallable_Check(pFunc)) {
            /* pArgs = PyTuple_New(argc - 3);
             for (i = 0; i < argc - 3; ++i) {
                 pValue = PyInt_FromLong(atoi(argv[i + 3]));
@@ -43,7 +42,7 @@ void init_python(Problem*p) {
                 PyTuple_SetItem(pArgs, i, pValue);
             }*/
 
-            n =(Datafile*) PyObject_CallObject(pFunc, 0);
+      /*      n =(Datafile*) PyObject_CallObject(pFunc, 0);
             //pValue = PyObject_CallObject(pFunc, pArgs);
             //PyArg_ParseTupleAndKeywords(Pva)
             if (n != NULL) {
@@ -89,20 +88,19 @@ void init_python(Problem*p) {
         Py_Finalize();  
         exit(1);
     }
-    Py_Finalize();
+    Py_Finalize();*/
 }
 
 /*
 * @brief Initializes the materials thro python
 */
 void init_materials_python(Material *m, int mat_number) {
-    PyObject *pName, *pModule, *pFunc;
+  /*  PyObject *pName, *pModule, *pFunc;
     char* argv[3] = {"call", "input", "material1"}; 
     if (mat_number == 1) {
         argv[2] = "material2";    
     }
     Datafile *n = 0;
-    /* Error checking of pName left out */
     Py_Initialize();
     PyRun_SimpleString("import sys");
     PyRun_SimpleString("sys.path.append(\".\")");
@@ -115,7 +113,7 @@ void init_materials_python(Material *m, int mat_number) {
         pFunc = PyObject_GetAttrString(pModule, argv[2]);
         /* pFunc is a new reference */
     
-        if (pFunc && PyCallable_Check(pFunc)) {
+      /*  if (pFunc && PyCallable_Check(pFunc)) {
            /* pArgs = PyTuple_New(argc - 3);
             for (i = 0; i < argc - 3; ++i) {
                 pValue = PyInt_FromLong(atoi(argv[i + 3]));
@@ -128,7 +126,7 @@ void init_materials_python(Material *m, int mat_number) {
                 PyTuple_SetItem(pArgs, i, pValue);
             }*/
 
-            n = (Datafile*) PyObject_CallObject(pFunc, 0);
+      /*      n = (Datafile*) PyObject_CallObject(pFunc, 0);
             //pValue = PyObject_CallObject(pFunc, pArgs);
             //PyArg_ParseTupleAndKeywords(Pva)
             if (n != NULL) {
@@ -171,8 +169,96 @@ void init_materials_python(Material *m, int mat_number) {
         exit(1);
     }
     
-    Py_Finalize();
+    Py_Finalize();*/
 }
+
+/*
+*
+* @brief Initializes through reading from a datafile.
+**/
+void init_datafile(Problem *p, char* f_name) {
+    FILE *fp;
+    char * line = NULL;
+    fp = fopen(f_name, "r");
+    int num_type, num_mats;
+    size_t len = 0;
+    ssize_t read;
+    while ((read = getline(&line, &len, fp)) != -1) {
+        // set up the constants of the problem
+        if (strstr(line, "k_max") != NULL) {
+            p->coor.K_max = int_reader(line, len);
+        } else if(strstr(line, "l_max") != NULL) {
+            p->coor.L_max = int_reader(line, len);
+        } else if(strstr(line, "kc_max") != NULL) {
+            p->vol.KC_max = int_reader(line, len);
+        } else if(strstr(line, "lc_max") != NULL) {
+            p->vol.LC_max = int_reader(line, len);
+        } else if(strstr(line, "dt") != NULL) {
+            p->time.dt = double_reader(line, len);
+        } else if(strstr(line, "dt_max") != NULL) {
+            p->time.dt_max = double_reader(line, len);
+        } else if(strstr(line, "dt_factor") != NULL) {
+            p->time.dt_factor = double_reader(line, len);
+        } else if(strstr(line, "t0") != NULL) {
+            p->time.t0 = double_reader(line, len);
+        } else if(strstr(line, "time_diagnostic") != NULL) {
+            p->diag.time_print = double_reader(line, len);
+        } else if(strstr(line, "time_stop") != NULL) {
+            p->time.time_stop = double_reader(line, len);
+        } else if(strstr(line, "sigma_boltzman") != NULL) {
+            p->constants.sigma_boltzman = double_reader(line, len);
+        } else if(strstr(line, "c") != NULL) {
+            p->constants.c_light = double_reader(line, len);
+        } else if(strstr(line, "a_rad:") != NULL) {
+            p->constants.a_rad = double_reader(line, len);
+        } else if(strstr(line, "T0") != NULL) {
+            p->constants.T0 = double_reader(line, len);
+        } else if(strstr(line, "bc_type:") != NULL) {
+            //
+        } else if(strstr(line, "num_mats") != NULL) {
+            p->mats.num_mats = int_reader(line, len);
+        } else if(strstr(line, "mat_type") != NULL) {
+            p->mats.mat_type = int_reader(line, len);
+        }
+    }
+}
+
+void init_materials_datafile(Material *m, int mat_number) {
+    FILE *fp;
+    char * line = NULL;
+    if (mat_number == 1) {
+        fp = fopen("Silicon_Dioxide", "r");//SILICON DIOXIDE
+    }
+    size_t len = 0;
+    ssize_t read;
+    while ((read = getline(&line, &len, fp)) != -1) {
+        // set up the constants of the problem
+        if (strstr(line, "alpha") != NULL) {
+            m->alpha = double_reader(line, len);
+        } else if(strstr(line, "lambda") != NULL) {
+            m->lambda = double_reader(line, len);
+        } else if(strstr(line, "beta") != NULL) {
+            m->beta = double_reader(line, len);
+        } else if(strstr(line, "mu") != NULL) {
+            m->mu = double_reader(line, len);
+        } else if(strstr(line, "g") != NULL) {
+            m->g = double_reader(line, len);
+        } else if(strstr(line, "f") != NULL) {
+            m->f = double_reader(line, len);
+        } else if(strstr(line, "i_start") != NULL) {
+            m->i_start = int_reader(line, len);
+        } else if(strstr(line, "i_end") != NULL) {
+            m->i_end = int_reader(line, len);
+        } else if(strstr(line, "j_start") != NULL) {
+            m->j_start = int_reader(line, len);
+        } else if(strstr(line, "j_end") != NULL) {
+            m->j_end = int_reader(line, len);
+        } else if(strstr(line, "rho") != NULL) {
+            m->init_rho = double_reader(line, len);
+        }
+    }
+}
+
 
 /**
  * @brief initializes all of the structures
@@ -182,13 +268,15 @@ void init_materials_python(Material *m, int mat_number) {
  * Third, we allocate the memory.
  * Fourth initialize values.
  */
-void init(Problem *p) {
+void init(Problem *p, char * argv[]) {
     int i, j;
     int K_max,L_max,KC_max,LC_max;
-    init_python(p);
+    //init_python(p);
+    init_datafile(p, argv[1]);
     p->mats.mat = (Material *) malloc(sizeof(Material) * p->mats.num_mats);
     for (i = 0; i < p->mats.num_mats; i++) {
-        init_materials_python(&p->mats.mat[i], i);
+        //init_materials_python(&p->mats.mat[i], i);
+        init_materials_datafile(&p->mats.mat[i], p->mats.mat_type);
     }
     
     
@@ -206,8 +294,8 @@ void init(Problem *p) {
 
     p->energy.current = malloc_2d(KC_max, LC_max );
     p->energy.prev    = malloc_2d(KC_max, LC_max );
-    p->temp.current = malloc_2d(KC_max, LC_max );
-    p->temp.prev    = malloc_2d(KC_max, LC_max );
+    p->temp.current   = malloc_2d(KC_max, LC_max );
+    p->temp.prev      = malloc_2d(KC_max, LC_max );
     
     p->vol.values = malloc_2d(KC_max, LC_max);
     p->rho.values = malloc_2d(KC_max, LC_max);

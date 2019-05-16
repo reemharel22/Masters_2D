@@ -298,3 +298,59 @@ double maximum(double a, double b) {
     }
     return b;
 }
+
+int int_reader(char *str, int len) {
+    char delim[] = " ";
+    char *ptr = strtok(str, delim);
+    ptr = strtok(NULL, delim);
+    int dble = atoi(ptr);
+    return dble;
+}
+
+int* int_array_reader(char *str, int len) {
+    char delim[] = " ";
+    len = -1;
+    char * tmp[50];
+    strcpy(tmp, str);
+    char *ptr = strtok(tmp, delim);
+    while (ptr != NULL) {
+        len ++;
+        ptr = strtok (NULL, " ");
+    }
+    int * arr = (int*) malloc(sizeof(int) * len);
+    char *ptr1 = strtok(str, delim);
+    int i = 0;
+    for ( i = 0; i < len; i++) {
+        ptr1 = strtok (NULL, " ");
+        arr[i] = atoi(ptr1);
+    }
+    return arr;
+}
+
+double double_reader(char *str, int len) {
+    char delim[] = " ";
+    char *ptr = strtok(str, delim);
+    ptr = strtok(NULL, delim);
+    double dble = atof(ptr);
+    return dble;
+}
+
+double* double_array_reader(char *str, int len) {
+    char delim[] = " ";
+    len = -1;
+    char * tmp[50];
+    strcpy(tmp, str);
+    char *ptr = strtok(tmp, delim);
+    while (ptr != NULL) {
+        len ++;
+        ptr = strtok (NULL, " ");
+    }
+    double * arr = (double*) malloc(sizeof(double) * len);
+    char *ptr1 = strtok(str, delim);
+    int i = 0;
+    for ( i = 0; i < len; i++) {
+        ptr1 = strtok (NULL, " ");
+        arr[i] = atof(ptr1);
+    }
+    return arr;
+}
