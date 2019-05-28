@@ -22,9 +22,7 @@
 
 int main (int argc, char* argv[]) {
     Problem prob;
-
     init(&prob, argv);
-    
     do {
         do_timestep(&prob);
         // todo diagnostics

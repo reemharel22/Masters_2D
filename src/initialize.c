@@ -186,6 +186,7 @@ void init_datafile(Problem *p, char* f_name) {
     while ((read = getline(&line, &len, fp)) != -1) {
         // set up the constants of the problem
         if (strstr(line, "k_max") != NULL) {
+
             p->coor.K_max = int_reader(line, len);
         } else if(strstr(line, "l_max") != NULL) {
             p->coor.L_max = int_reader(line, len);
@@ -221,6 +222,7 @@ void init_datafile(Problem *p, char* f_name) {
             p->mats.mat_type = int_reader(line, len);
         }
     }
+    fclose(fp);
 }
 
 void init_materials_datafile(Material *m, int mat_number) {
@@ -268,17 +270,19 @@ void init_materials_datafile(Material *m, int mat_number) {
  * Third, we allocate the memory.
  * Fourth initialize values.
  */
-void init(Problem *p, char * argv[]) {
+void init(Problem *p, char *argv[]) {
     int i, j;
     int K_max,L_max,KC_max,LC_max;
     //init_python(p);
+    
     init_datafile(p, argv[1]);
+    printf("Done reading datafile\n");
     p->mats.mat = (Material *) malloc(sizeof(Material) * p->mats.num_mats);
     for (i = 0; i < p->mats.num_mats; i++) {
         //init_materials_python(&p->mats.mat[i], i);
         init_materials_datafile(&p->mats.mat[i], p->mats.mat_type);
     }
-    
+    printf("Done reading Materials\n");
     
     // WE HAVE IMAGINARY CELLS. SO WE NEED TO ADD FOR THE VERTEX QUANT..
     // + 2 (right and left edge)

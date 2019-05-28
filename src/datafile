@@ -1,7 +1,7 @@
 k_max 51
-l_max 4
+l_max 2
 kc_max 50
-lc_max 3
+lc_max 1
 dt 1E-11
 dt_max 1E-11
 dt_factor 2
