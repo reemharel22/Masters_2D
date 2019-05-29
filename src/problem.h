@@ -20,5 +20,5 @@ void apply_boundary(double **data,int, int n, int m);
  */
 double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt);
 double **build_b_vector(Quantity *E, Quantity *T, Data *opac, Constants *consts, double dt);
-
+void update_prev_values(Problem * p);
 #endif

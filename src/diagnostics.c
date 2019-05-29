@@ -17,7 +17,7 @@ void diagnostic_Quantity_2d(Quantity *Q,double t,  char*f_name) {
     int X = Q->KC_max;
     int Y = Q->LC_max;
     int i, j;
-    FILE*fp = fopen(f_name, "w");
+   // FILE*fp = fopen(f_name, "w");
     for (i = 0; i < X; i++) {
         for (j = 0; j < Y; j++) {
             // TODO
@@ -27,8 +27,7 @@ void diagnostic_Quantity_2d(Quantity *Q,double t,  char*f_name) {
 
 void diagnostic_Quantity_1d(Quantity *Q, double t, int y, char*f_name) {
     int X = Q->KC_max;
-    int Y = Q->LC_max;
-    int i, j;
+    int i;
     FILE*fp = fopen(f_name, "w");
     fprintf(fp, "%10e ", t);
     for (i = 0; i < X; i++) {
@@ -38,10 +37,10 @@ void diagnostic_Quantity_1d(Quantity *Q, double t, int y, char*f_name) {
 
 void diagnostics_initial(Problem *p) {
     int i = 0;
-    char* f_name = "../data/Initial.txt";
+    char* f_name = "data/Initial.txt";
     FILE*fp = fopen(f_name, "w");
     fprintf(fp, "Time Segment: {\n");
-    fprintf(fp, "\tInitial time: %10e.\n\tStarting dt: %10e.\nDt max: %10e\n", p->time.t0, p->time.dt, p->time.dt_max);
+    fprintf(fp, "\tInitial time: %10e.\n\tStarting dt: %10e.\n\tdt max: %10e\n", p->time.t0, p->time.dt, p->time.dt_max);
     fprintf(fp, "\tdt factor: %10e.\n\tTime finish: %10e.\n}\n", p->time.dt_factor, p->time.time_stop);
 
     fprintf(fp, "Materials Segment: {\n");

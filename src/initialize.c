@@ -194,7 +194,7 @@ void init_datafile(Problem *p, char* f_name) {
             p->vol.KC_max = int_reader(line, len);
         } else if(strstr(line, "lc_max") != NULL) {
             p->vol.LC_max = int_reader(line, len);
-        } else if(strstr(line, "dt") != NULL) {
+        } else if(strstr(line, "dt_0") != NULL) {
             p->time.dt = double_reader(line, len);
         } else if(strstr(line, "dt_max") != NULL) {
             p->time.dt_max = double_reader(line, len);
@@ -210,8 +210,8 @@ void init_datafile(Problem *p, char* f_name) {
             p->constants.sigma_boltzman = double_reader(line, len);
         } else if(strstr(line, "c") != NULL) {
             p->constants.c_light = double_reader(line, len);
-        } else if(strstr(line, "a_rad:") != NULL) {
-            p->constants.a_rad = double_reader(line, len);
+        } else if(strstr(line, "sigma_factor") != NULL) {
+            p->constants.sigma_factor = double_reader(line, len);
         } else if(strstr(line, "T0") != NULL) {
             p->constants.T0 = double_reader(line, len);
         } else if(strstr(line, "bc_type:") != NULL) {
@@ -292,6 +292,7 @@ void init(Problem *p, char *argv[]) {
     KC_max = p->diff_coeff.KC_max = p->energy.KC_max = p->vol.KC_max += 2;
     LC_max = p->diff_coeff.LC_max = p->energy.LC_max = p->vol.LC_max += 2;
 
+    p->constants.a_rad = 4.0 * p->constants.sigma_boltzman / p->constants.c_light;
     //malloc
     p->coor.R = malloc_2d(K_max, L_max );
     p->coor.Z = malloc_2d(K_max, L_max );
@@ -303,12 +304,15 @@ void init(Problem *p, char *argv[]) {
     
     p->vol.values = malloc_2d(KC_max, LC_max);
     p->rho.values = malloc_2d(KC_max, LC_max);
+    
     p->diff_coeff.values = malloc_2d(KC_max, LC_max);
+    p->opacity.values    = malloc_2d(KC_max, LC_max);
+    p->heat_cap.values   = malloc_2d(KC_max, LC_max);
+
 
     //time
     p->time.cycle = 0;
     p->time.time_passed = p->time.t0;
-
     //init
     init_mesh_Kershaw1(p->coor.K_max,p->coor.L_max,p->coor.R,p->coor.Z);
 
@@ -322,7 +326,6 @@ void init(Problem *p, char *argv[]) {
     mesh_square_volume(p->vol.values, p->coor.R,p->coor.Z,KC_max,LC_max);
     init_density(&p->mats, &p->rho);
     diagnostics_initial(p);
-    exit(1);
 }
 
 /**

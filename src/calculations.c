@@ -37,8 +37,6 @@ void calculate_temperature(Quantity *T, Quantity *E, Constants *consts, Data *op
 */
 void calculate_opacity(Data *opacity,Data *rho, Quantity *T, Materials * mats) {
     int i, j, k = 0;
-    int X = T->KC_max;
-    int Y = T->LC_max;
     double **temp = T->prev;
     double **density = rho->values;
     double **opac = opacity->values;
@@ -104,7 +102,7 @@ void calculate_diffusion_coefficient(Data* diff, Data *opac, Constants *consts, 
     double **diff_c = diff->values;
     int X = diff->KC_max;
     int Y = diff->LC_max;
-
+    //including boundary cells
     for (i = 0; i < X; i++) {
         for (j = 0; j < Y; j++) {
             diff_c[i][j] = c / ( 3.0 * opacity[i][j]);

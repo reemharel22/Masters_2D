@@ -238,10 +238,11 @@ void jacobi_method_naive(int max_iter, int K, int L, double epsilon, double ***A
     for (iter = 0; iter < max_iter; iter++) {
         // n^2 is i to j...
         for (i = 1; i < K; i++) {
+            sum = 0.0;
+
             for (j = 1; j < L; j++) {
-                sum = 0.0;
                 //for (k = 0; k < 10; k++) {
-                //let's write it explicitly
+                //let's write it explicitly Maybe should be A[i][j]
                 sum += A[i - 1][j - 1][0] * x_prev[i + 1][j - 1]; // A[i][j][0] is left bottom.
                 sum += A[i - 1][j - 1][1] * x_prev[i + 1][j];     // A[i][j][1] is bottom.
                 sum += A[i - 1][j - 1][2] * x_prev[i + 1][j + 1]; // A[i][j][2] is right bottom.
@@ -254,10 +255,8 @@ void jacobi_method_naive(int max_iter, int K, int L, double epsilon, double ***A
                 aii_r = 1.0 / A[i - 1][j - 1][4];
                 
                 x[i][j] = aii_r * (b[i - 1][j - 1] - sum);
-                printf("%10e\t",x[i][j]);
             }
         }
-        printf("\n");
         if (converge(K, L, epsilon, x_prev, x)) {
             free_2d(x_prev, K);
             return;

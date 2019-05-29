@@ -1,5 +1,6 @@
 #include "problem.h"
 #include "utils.h"
+#include <stdio.h>
 #include "math.h"
 #include "calculations.h"
 /**
@@ -67,20 +68,28 @@ int update_time(Time *t, Quantity *T) {
  *  
  */
 void do_timestep(Problem *p) {
-    int i, j;
     double ***A, **b;
-    calculate_opacity(&p->opacity, &p->rho, &p->temp, &p->mats);
+
+    calculate_opacity(&p->opacity, &p->rho, &p->temp, &p->mats);//with prev
     calculate_diffusion_coefficient(&p->diff_coeff, &p->opacity, &p->constants, 0);
     calculate_heat_capacity(&p->heat_cap, &p->rho, &p->temp, &p->mats);
 
-    apply_boundary(&p->energy.current,p->boundary_type, p->energy.KC_max, p->energy.LC_max);
 
+    //apply boundary on the energy and temperature
+    apply_boundary(p->energy.prev, p->boundary_type, p->energy.KC_max, p->energy.LC_max);
+    apply_boundary(p->temp.prev, p->boundary_type, p->energy.KC_max, p->energy.LC_max);
+        printf("Done opacity!\n");
+    exit(1);
+    //Calculating the energy.
     A = build_matrix_A(&p->coor, &p->vol, &p->diff_coeff, p->time.dt);
     b = build_b_vector(&p->energy, &p->temp, &p->opacity, &p->constants, p->time.dt);
     jacobi_method_naive(1000, p->energy.KC_max, p->energy.LC_max, 1e-10, A, p->energy.current, b);
 
-    free_3d(A, p->energy.KC_max, p->energy.LC_max);
+    calculate_temperature(&p->temp, &p->energy, &p->constants, &p->opacity, &p->heat_cap, p->time.dt);
+
+    update_prev_values(p);
     free_2d(b, p->energy.LC_max);
+    exit(1);
     return;
 }
 
@@ -277,15 +286,35 @@ double **build_b_vector(Quantity *E, Quantity *T, Data *opac, Constants *consts,
     int X = T->KC_max;
     int Y = T->LC_max;
     double c = consts->c_light;
+    double sigma_factor = consts->sigma_factor;
     double **b = malloc_2d(X, Y);
     double **energy = E->prev;
     double **temp = T->prev;
     double **opacity =  opac->values;
+
     for (i = 0; i < X; i++) {
         for (j = 0; j < Y; j++) {
-            b[i][j] = energy[i][j] + opacity[i][j] * dt * c * temp[i][j];
+            b[i][j] = energy[i][j] + sigma_factor * opacity[i][j] * dt * c * temp[i][j];
         }
     }
     return b;
 }
 
+void update_prev_values(Problem * p) {
+    int i, j;
+    int X = p->temp.KC_max;
+    int Y = p->temp.LC_max;
+
+    double **t_prev = p->temp.prev;
+    double **t_curr = p->temp.current;
+
+    double **e_prev = p->energy.prev;
+    double **e_curr = p->energy.current;
+
+    for (i = 0; i < X; i++) {
+        for (j = 0; j < Y; j++) {
+            t_prev[i][j] = t_curr[i][j];
+            e_prev[i][j] = e_curr[i][j];
+        }
+    }
+}

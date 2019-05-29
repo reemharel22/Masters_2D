@@ -60,6 +60,8 @@ typedef struct Constants {
     double a_rad; //!< a radiation constant
     double c_light; //!< Speed of light
     double sigma_boltzman; //!< Sigma boltzmann
+    double sigma_factor;
+    double source;
     double T0;//!< Initial temperature.
 } Constants;
 
