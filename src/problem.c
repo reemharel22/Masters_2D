@@ -9,7 +9,7 @@
 
 /**
  * @brief End of time step, update time params.
- * @param t The Time struct.
+ * @param t The Time struct
  * checks if we got to the end time of the execution.
  * updates the cycle and the time passed.
  * aswell as calculates the new value of T
