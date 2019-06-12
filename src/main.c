@@ -21,12 +21,12 @@
  */
 
 int main (int argc, char* argv[]) {
-    Problem prob;
-    init(&prob, argv);
+    Problem *prob = malloc(sizeof(struct Problem));
+    init(prob, argv);
     do {
-        do_timestep(&prob);
-    } while( !update_time(&prob.time, &prob.temp) );
+        do_timestep(prob);
+    } while( !update_time(prob->time, prob->temp) );
     
-    clean_prog(&prob);
+    clean_prog(prob);
     return 0;
 }

@@ -9,7 +9,7 @@
 
 /**
  * @brief End of time step, update time params.
- * @param t The Time struct
+ * @param t The Time struct.
  * checks if we got to the end time of the execution.
  * updates the cycle and the time passed.
  * aswell as calculates the new value of T
@@ -64,32 +64,31 @@ int update_time(Time *t, Quantity *T) {
 /**
  * @brief the main time step.
  * 1. First we calculate the physical properties: Opacity, Diffusion Coefficient and the heat capacity.
- *
+ * THE TEMPERATURE ISNT REALLY T BUT V...
  *  
  */
 void do_timestep(Problem *p) {
     double ***A, **b;
-
+    
     calculate_opacity(&p->opacity, &p->rho, &p->temp, &p->mats);//with prev
     calculate_diffusion_coefficient(&p->diff_coeff, &p->opacity, &p->constants, 0);
     calculate_heat_capacity(&p->heat_cap, &p->rho, &p->temp, &p->mats);
 
 
     //apply boundary on the energy and temperature
-    apply_boundary(p->energy.prev, p->boundary_type, p->energy.KC_max, p->energy.LC_max);
-    apply_boundary(p->temp.prev, p->boundary_type, p->energy.KC_max, p->energy.LC_max);
-        printf("Done opacity!\n");
-    exit(1);
+    apply_boundary(p->energy->prev, p->boundary_type, p->energy->KC_max, p->energy->LC_max);
+    apply_boundary(p->temp->prev, p->boundary_type, p->energy->KC_max, p->energy->LC_max);
     //Calculating the energy.
-    A = build_matrix_A(&p->coor, &p->vol, &p->diff_coeff, p->time.dt);
-    b = build_b_vector(&p->energy, &p->temp, &p->opacity, &p->constants, p->time.dt);
-    jacobi_method_naive(1000, p->energy.KC_max, p->energy.LC_max, 1e-10, A, p->energy.current, b);
+    A = build_matrix_A(&p->coor, &p->vol, &p->diff_coeff, p->time->dt);
+    b = build_b_vector(&p->energy, &p->temp, &p->opacity, &p->constants, p->time->dt);
+    
+    jacobi_method_naive(1000, p->energy->KC_max, p->energy->LC_max, 1e-10, A, p->energy->current, b);
 
-    calculate_temperature(&p->temp, &p->energy, &p->constants, &p->opacity, &p->heat_cap, p->time.dt);
+    free_3d(A,p->energy->KC_max, p->energy->LC_max);
+    calculate_temperature(&p->temp, &p->energy, &p->constants, &p->opacity, &p->heat_cap, p->time->dt);
 
     update_prev_values(p);
-    free_2d(b, p->energy.LC_max);
-    exit(1);
+    free_2d(b, p->energy->LC_max);
     return;
 }
 
@@ -116,20 +115,22 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
     double **Z = coor->Z;
     double **D = diff->values;
 
-    double RK_KL[K_max][L_max];
-    double RL_KL[K_max][L_max];
-    double ZK_KL[K_max][L_max];
-    double ZL_KL[K_max][L_max];
+    double **RK_KL = malloc_2d(K_max, L_max);
+    double **RL_KL = malloc_2d(K_max, L_max);
+    double **ZK_KL = malloc_2d(K_max, L_max);
+    double **ZL_KL = malloc_2d(K_max, L_max);
     
-    double rho1[K_max - 1][L_max - 1];
-    double rho2[K_max - 1][L_max - 1];
-    double rho3[K_max - 1][L_max - 1];
-    double rho4[K_max - 1][L_max - 1];
+    double **rho1 = malloc_2d(K_max - 1, L_max - 1);
+    double **rho2 = malloc_2d(K_max - 1, L_max - 1);
+    double **rho3 = malloc_2d(K_max - 1, L_max - 1);
+    double **rho4 = malloc_2d(K_max - 1, L_max - 1);
 
-    double sigma[K_max][L_max], lambda[K_max][L_max];
-    double jacobi[K_max][L_max];
-    double ***A = malloc_3d(K_max, L_max, 10);
+    double **sigma = malloc_2d(K_max, L_max);
+    double **lambda = malloc_2d(K_max, L_max);
+    double **jacobi = malloc_2d(K_max, L_max);
+    double ***A = malloc_3d(KC_max, LC_max, 10);
     
+
     //#pragma omp parallel for default(shared)
     for(i = 0; i < K_max - 1; i++){
         for (j = 0; j < L_max - 1; j++) {
@@ -143,7 +144,7 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
             jacobi[i][j] = RK_KL[i][j] * ZL_KL[i][j] - RL_KL[i][j] * ZK_KL[i][j];
         }
     }
-    
+
     // these sizes are cell quantities, therefore we go KC, LC
     // we do not go throught the last imaginary cells, ofc.
     // #pragma omp parallel for default(shared)
@@ -210,9 +211,10 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
     double a5,a6,a7,a8;
     int p = 0;
     k = 0;
-    for(i = 0; i < K_max - 1; i++){
+    for(i = 0; i < KC_max - 1; i++){
         //k is equivilent to i - 1. instead of MAX(i,0)...
-        for (j = 0; j < L_max - 1; j++) {
+        for (j = 0; j < LC_max - 1; j++) {
+
             vol_1 = 1.0 / volume[i][j];
             A[i][j][4] = 1.0 - dt*vol_1*( -sigma[i][j] - sigma[k][j] - lambda[i][j] - lambda[i][j - 1]
                          + 0.5* (rho1[i][j] + rho2[i][j] - rho3[i][j] - rho4[i][j]) );
@@ -237,6 +239,21 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
         k = i;
     }
 
+    free_2d(RK_KL, K_max);
+    free_2d(RL_KL, K_max);
+    free_2d(ZK_KL, K_max);
+    free_2d(ZL_KL, K_max);
+
+    free_2d(rho1, K_max - 1);
+    free_2d(rho2, K_max - 1);
+    free_2d(rho3, K_max - 1);
+    free_2d(rho4, K_max - 1);
+
+    free_2d(sigma, K_max);
+    free_2d(lambda, K_max);
+    
+    free_2d(jacobi, K_max);
+        
     return A;
 }
 
@@ -291,10 +308,14 @@ double **build_b_vector(Quantity *E, Quantity *T, Data *opac, Constants *consts,
     double **energy = E->prev;
     double **temp = T->prev;
     double **opacity =  opac->values;
-
+    printf("%d",X);
+    print_2d(energy, X, Y);
+    exit(1);
     for (i = 0; i < X; i++) {
         for (j = 0; j < Y; j++) {
+            exit(1);
             b[i][j] = energy[i][j] + sigma_factor * opacity[i][j] * dt * c * temp[i][j];
+            
         }
     }
     return b;
@@ -302,14 +323,14 @@ double **build_b_vector(Quantity *E, Quantity *T, Data *opac, Constants *consts,
 
 void update_prev_values(Problem * p) {
     int i, j;
-    int X = p->temp.KC_max;
-    int Y = p->temp.LC_max;
+    int X = p->temp->KC_max;
+    int Y = p->temp->LC_max;
 
-    double **t_prev = p->temp.prev;
-    double **t_curr = p->temp.current;
+    double **t_prev = p->temp->prev;
+    double **t_curr = p->temp->current;
 
-    double **e_prev = p->energy.prev;
-    double **e_curr = p->energy.current;
+    double **e_prev = p->energy->prev;
+    double **e_curr = p->energy->current;
 
     for (i = 0; i < X; i++) {
         for (j = 0; j < Y; j++) {

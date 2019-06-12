@@ -13,7 +13,7 @@ void print_matrix_row(int K, int L, double**val) ;
 void print_matrix_col(int K, int L, double**val) ;
 void free_2d(double **ptr, int n);
 void free_3d(double ***ptr, int n,int m);
-void print_2d(int K, int L, double **arr);
+void print_2d(double **arr, int K, int L);
 void print_3d(int K, int L, int Q, double ***arr);
 void free_1d(double *ptr);
 double minimum(double, double);

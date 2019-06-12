@@ -108,18 +108,18 @@ typedef struct Diagnostics {
  * 
  */
 typedef struct Problem {
-    struct Data diff_coeff;
-    struct Materials mats; 
-    struct Data vol;
-    struct Data rho;
-    struct Quantity energy;
-    struct Quantity temp;
-    struct Coordinate coor;
-    struct Constants constants;
-    struct Diagnostics diag;
-    struct Data opacity;
-    struct Data heat_cap;
-    struct Time time;
+    struct Data* diff_coeff;
+    struct Materials* mats; 
+    struct Data *vol;
+    struct Data *rho;
+    struct Quantity *energy;
+    struct Quantity *temp;
+    struct Coordinate *coor;
+    struct Constants *constants;
+    struct Diagnostics* diag;
+    struct Data *opacity;
+    struct Data *heat_cap;
+    struct Time *time;
     int boundary_type;
 }Problem;
 

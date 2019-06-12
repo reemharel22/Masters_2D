@@ -187,39 +187,39 @@ void init_datafile(Problem *p, char* f_name) {
         // set up the constants of the problem
         if (strstr(line, "k_max") != NULL) {
 
-            p->coor.K_max = int_reader(line, len);
+            p->coor->K_max = int_reader(line, len);
         } else if(strstr(line, "l_max") != NULL) {
-            p->coor.L_max = int_reader(line, len);
+            p->coor->L_max = int_reader(line, len);
         } else if(strstr(line, "kc_max") != NULL) {
-            p->vol.KC_max = int_reader(line, len);
+            p->vol->KC_max = int_reader(line, len);
         } else if(strstr(line, "lc_max") != NULL) {
-            p->vol.LC_max = int_reader(line, len);
+            p->vol->LC_max = int_reader(line, len);
         } else if(strstr(line, "dt_0") != NULL) {
-            p->time.dt = double_reader(line, len);
+            p->time->dt = double_reader(line, len);
         } else if(strstr(line, "dt_max") != NULL) {
-            p->time.dt_max = double_reader(line, len);
+            p->time->dt_max = double_reader(line, len);
         } else if(strstr(line, "dt_factor") != NULL) {
-            p->time.dt_factor = double_reader(line, len);
+            p->time->dt_factor = double_reader(line, len);
         } else if(strstr(line, "t0") != NULL) {
-            p->time.t0 = double_reader(line, len);
+            p->time->t0 = double_reader(line, len);
         } else if(strstr(line, "time_diagnostic") != NULL) {
-            p->diag.time_print = double_reader(line, len);
+            p->diag->time_print = double_reader(line, len);
         } else if(strstr(line, "time_stop") != NULL) {
-            p->time.time_stop = double_reader(line, len);
+            p->time->time_stop = double_reader(line, len);
         } else if(strstr(line, "sigma_boltzman") != NULL) {
-            p->constants.sigma_boltzman = double_reader(line, len);
+            p->constants->sigma_boltzman = double_reader(line, len);
         } else if(strstr(line, "c") != NULL) {
-            p->constants.c_light = double_reader(line, len);
+            p->constants->c_light = double_reader(line, len);
         } else if(strstr(line, "sigma_factor") != NULL) {
-            p->constants.sigma_factor = double_reader(line, len);
+            p->constants->sigma_factor = double_reader(line, len);
         } else if(strstr(line, "T0") != NULL) {
-            p->constants.T0 = double_reader(line, len);
+            p->constants->T0 = double_reader(line, len);
         } else if(strstr(line, "bc_type:") != NULL) {
             //
         } else if(strstr(line, "num_mats") != NULL) {
-            p->mats.num_mats = int_reader(line, len);
+            p->mats->num_mats = int_reader(line, len);
         } else if(strstr(line, "mat_type") != NULL) {
-            p->mats.mat_type = int_reader(line, len);
+            p->mats->mat_type = int_reader(line, len);
         }
     }
     fclose(fp);
@@ -274,56 +274,77 @@ void init(Problem *p, char *argv[]) {
     int i, j;
     int K_max,L_max,KC_max,LC_max;
     //init_python(p);
+    //first we malloc all structures
+    p->diff_coeff = malloc(sizeof(struct Data));
+    p->vol = malloc(sizeof(struct Data));
+    p->rho = malloc(sizeof(struct Data));
+    p->opacity = malloc(sizeof(struct Data));
+    p->heat_cap = malloc(sizeof(struct Data));
+
+    p->mats = malloc(sizeof(struct Materials));
     
+    p->temp = malloc(sizeof(struct Quantity));
+    p->energy = malloc(sizeof(struct Quantity));
+
+    p->time = malloc(sizeof(struct Time));
+
+    p->constants = malloc(sizeof(struct Constants));
+    p->coor = malloc(sizeof(struct Coordinate));
+
+
+
     init_datafile(p, argv[1]);
     printf("Done reading datafile\n");
-    p->mats.mat = (Material *) malloc(sizeof(Material) * p->mats.num_mats);
-    for (i = 0; i < p->mats.num_mats; i++) {
-        //init_materials_python(&p->mats.mat[i], i);
-        init_materials_datafile(&p->mats.mat[i], p->mats.mat_type);
+    p->mats->mat = (Material *) malloc(sizeof(Material) * p->mats->num_mats);
+    for (i = 0; i < p->mats->num_mats; i++) {
+        //init_materials_python(&p->mats->mat[i], i);
+        init_materials_datafile(&p->mats->mat[i], p->mats->mat_type);
     }
     printf("Done reading Materials\n");
     
+
+
+
     // WE HAVE IMAGINARY CELLS. SO WE NEED TO ADD FOR THE VERTEX QUANT..
     // + 2 (right and left edge)
     // AND TO CELL QUANTITY + 2 ASWELL (EACH)
-    K_max = p->coor.K_max += 2;
-    L_max = p->coor.L_max += 2;
-    KC_max = p->diff_coeff.KC_max = p->energy.KC_max = p->vol.KC_max += 2;
-    LC_max = p->diff_coeff.LC_max = p->energy.LC_max = p->vol.LC_max += 2;
+    K_max = p->coor->K_max += 2;
+    L_max = p->coor->L_max += 2;
+    KC_max = p->diff_coeff->KC_max = p->energy->KC_max = p->vol->KC_max += 2;
+    LC_max = p->diff_coeff->LC_max = p->energy->LC_max = p->vol->LC_max += 2;
 
-    p->constants.a_rad = 4.0 * p->constants.sigma_boltzman / p->constants.c_light;
+    p->constants->a_rad = 4.0 * p->constants->sigma_boltzman / p->constants->c_light;
     //malloc
-    p->coor.R = malloc_2d(K_max, L_max );
-    p->coor.Z = malloc_2d(K_max, L_max );
+    p->coor->R = malloc_2d(K_max, L_max );
+    p->coor->Z = malloc_2d(K_max, L_max );
 
-    p->energy.current = malloc_2d(KC_max, LC_max );
-    p->energy.prev    = malloc_2d(KC_max, LC_max );
-    p->temp.current   = malloc_2d(KC_max, LC_max );
-    p->temp.prev      = malloc_2d(KC_max, LC_max );
+    p->energy->current = malloc_2d(KC_max, LC_max );
+    p->energy->prev    = malloc_2d(KC_max, LC_max );
+    p->temp->current   = malloc_2d(KC_max, LC_max );
+    p->temp->prev      = malloc_2d(KC_max, LC_max );
     
-    p->vol.values = malloc_2d(KC_max, LC_max);
-    p->rho.values = malloc_2d(KC_max, LC_max);
+    p->vol->values = malloc_2d(KC_max, LC_max);
+    p->rho->values = malloc_2d(KC_max, LC_max);
     
-    p->diff_coeff.values = malloc_2d(KC_max, LC_max);
-    p->opacity.values    = malloc_2d(KC_max, LC_max);
-    p->heat_cap.values   = malloc_2d(KC_max, LC_max);
+    p->diff_coeff->values = malloc_2d(KC_max, LC_max);
+    p->opacity->values    = malloc_2d(KC_max, LC_max);
+    p->heat_cap->values   = malloc_2d(KC_max, LC_max);
 
 
     //time
-    p->time.cycle = 0;
-    p->time.time_passed = p->time.t0;
+    p->time->cycle = 0;
+    p->time->time_passed = p->time->t0;
     //init
-    init_mesh_Kershaw1(p->coor.K_max,p->coor.L_max,p->coor.R,p->coor.Z);
+    init_mesh_Kershaw1(p->coor->K_max,p->coor->L_max,p->coor->R,p->coor->Z);
 
     for ( i = 0 ; i < KC_max; i++) {
         for (j = 0 ; j < LC_max; j++) {
-             p->energy.prev[i][j] = p->energy.current[i][j] = 0;
-             p->temp.prev[i][j] = p->temp.current[i][j] = p->constants.T0;
+             
+            p->energy->prev[i][j] = p->energy->current[i][j] = p->temp->prev[i][j] = p->temp->current[i][j] = pow(p->constants->T0, 4) * p->constants->a_rad;
         }
     }
 
-    mesh_square_volume(p->vol.values, p->coor.R,p->coor.Z,KC_max,LC_max);
+    mesh_square_volume(p->vol->values, p->coor->R,p->coor->Z, KC_max, LC_max);
     init_density(&p->mats, &p->rho);
     diagnostics_initial(p);
 }
@@ -371,14 +392,22 @@ void init_density(Materials *mats, Data *density) {
 }
 
 void clean_prog(Problem *p) {
-    int K_max = p->coor.K_max;
-    int L_max = p->coor.L_max;
-    int KC_max = p->energy.KC_max;
-    int LC_max = p->energy.LC_max;
-    free_2d(p->coor.R,K_max);
-    free_2d(p->coor.Z,K_max);
-    free_2d(p->energy.current,KC_max);
-    free_2d(p->energy.prev,KC_max);
-    free_2d(p->vol.values,KC_max);
+    int K_max = p->coor->K_max;
+    int L_max = p->coor->L_max;
+    int KC_max = p->energy->KC_max;
+    int LC_max = p->energy->LC_max;
+    free_2d(p->coor->R,K_max);
+    free_2d(p->coor->Z,K_max);
+    free_2d(p->energy->current,KC_max);
+    free_2d(p->energy->prev,KC_max);
+    free_2d(p->vol->values,KC_max);
+    free(p->coor);
+    free(p->diff_coeff);
+    free(p->vol);
+    free(p->rho);
+    free(p->opacity);
+    free(p->heat_cap);
+    free(p->time);
+    free(p->energy);
     //free_3d(A,K_max,L_max);
 }

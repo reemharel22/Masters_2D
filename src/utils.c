@@ -112,7 +112,7 @@ void print_matrix_col(int K, int L, double**val) {
 } 
 
 
-void print_2d(int K, int L, double **arr) {
+void print_2d(double **arr, int K, int L) {
     int i,j;
     for (i = 0; i < K; i++) {
         for (j = 0; j < L; j++) {
@@ -165,8 +165,8 @@ double square_volume(double x1, double x2, double y1, double y2) {
 void mesh_square_volume(double **volume, double **X, double **Y, 
 int n, int m) {
     int i,j;
-    for ( i = 0; i < n-1; i++) {
-        for (j = 0; j < m-1; j++) {
+    for ( i = 0; i < n; i++) {
+        for (j = 0; j < m; j++) {
             volume[i][j] = square_volume(X[i][j],X[i][j + 1],Y[i][j],Y[i + 1][j]);         
         }
     }
@@ -234,12 +234,11 @@ void jacobi_method_naive(int max_iter, int K, int L, double epsilon, double ***A
             x_prev[i][j] = x[i][j];
         }
     }
- 
+  //  print_2d(K, L, x_prev);
     for (iter = 0; iter < max_iter; iter++) {
         // n^2 is i to j...
         for (i = 1; i < K; i++) {
             sum = 0.0;
-
             for (j = 1; j < L; j++) {
                 //for (k = 0; k < 10; k++) {
                 //let's write it explicitly Maybe should be A[i][j]
@@ -253,7 +252,7 @@ void jacobi_method_naive(int max_iter, int K, int L, double epsilon, double ***A
                 sum += A[i - 1][j - 1][8] * x_prev[i - 1][j + 1]; // A[i][j][8] is top right.
                 //}
                 aii_r = 1.0 / A[i - 1][j - 1][4];
-                
+    //            printf("%10e\n", A[i - 1][j - 1][1]);
                 x[i][j] = aii_r * (b[i - 1][j - 1] - sum);
             }
         }
