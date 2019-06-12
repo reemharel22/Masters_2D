@@ -71,9 +71,10 @@ void do_timestep(Problem *p) {
     double ***A, **b;
     
     calculate_opacity(&p->opacity, &p->rho, &p->temp, &p->mats);//with prev
+    
     calculate_diffusion_coefficient(&p->diff_coeff, &p->opacity, &p->constants, 0);
     calculate_heat_capacity(&p->heat_cap, &p->rho, &p->temp, &p->mats);
-
+    
 
     //apply boundary on the energy and temperature
     apply_boundary(p->energy->prev, p->boundary_type, p->energy->KC_max, p->energy->LC_max);

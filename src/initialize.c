@@ -186,7 +186,6 @@ void init_datafile(Problem *p, char* f_name) {
     while ((read = getline(&line, &len, fp)) != -1) {
         // set up the constants of the problem
         if (strstr(line, "k_max") != NULL) {
-
             p->coor->K_max = int_reader(line, len);
         } else if(strstr(line, "l_max") != NULL) {
             p->coor->L_max = int_reader(line, len);
@@ -222,15 +221,16 @@ void init_datafile(Problem *p, char* f_name) {
             p->mats->mat_type = int_reader(line, len);
         }
     }
+    
     fclose(fp);
 }
 
 void init_materials_datafile(Material *m, int mat_number) {
     FILE *fp;
     char * line = NULL;
-    if (mat_number == 1) {
+  //  if (mat_number == 1) {
         fp = fopen("Silicon_Dioxide", "r");//SILICON DIOXIDE
-    }
+   // }
     size_t len = 0;
     ssize_t read;
     while ((read = getline(&line, &len, fp)) != -1) {
@@ -281,6 +281,7 @@ void init(Problem *p, char *argv[]) {
     p->opacity = malloc(sizeof(struct Data));
     p->heat_cap = malloc(sizeof(struct Data));
 
+    p->diag = malloc(sizeof(struct Diagnostics));
     p->mats = malloc(sizeof(struct Materials));
     
     p->temp = malloc(sizeof(struct Quantity));
@@ -294,7 +295,6 @@ void init(Problem *p, char *argv[]) {
 
 
     init_datafile(p, argv[1]);
-    printf("Done reading datafile\n");
     p->mats->mat = (Material *) malloc(sizeof(Material) * p->mats->num_mats);
     for (i = 0; i < p->mats->num_mats; i++) {
         //init_materials_python(&p->mats->mat[i], i);
@@ -317,12 +317,12 @@ void init(Problem *p, char *argv[]) {
     //malloc
     p->coor->R = malloc_2d(K_max, L_max );
     p->coor->Z = malloc_2d(K_max, L_max );
-
+    
     p->energy->current = malloc_2d(KC_max, LC_max );
     p->energy->prev    = malloc_2d(KC_max, LC_max );
     p->temp->current   = malloc_2d(KC_max, LC_max );
     p->temp->prev      = malloc_2d(KC_max, LC_max );
-    
+
     p->vol->values = malloc_2d(KC_max, LC_max);
     p->rho->values = malloc_2d(KC_max, LC_max);
     
@@ -335,7 +335,7 @@ void init(Problem *p, char *argv[]) {
     p->time->cycle = 0;
     p->time->time_passed = p->time->t0;
     //init
-    init_mesh_Kershaw1(p->coor->K_max,p->coor->L_max,p->coor->R,p->coor->Z);
+    init_mesh_Kershaw1(p->coor->K_max, p->coor->L_max,p->coor->R, p->coor->Z);
 
     for ( i = 0 ; i < KC_max; i++) {
         for (j = 0 ; j < LC_max; j++) {
@@ -345,7 +345,7 @@ void init(Problem *p, char *argv[]) {
     }
 
     mesh_square_volume(p->vol->values, p->coor->R,p->coor->Z, KC_max, LC_max);
-    init_density(&p->mats, &p->rho);
+    init_density(p->mats, p->rho);
     diagnostics_initial(p);
 }
 
