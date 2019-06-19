@@ -8,6 +8,11 @@
  * @file main.c
  */
 
+/*
+*
+* @brief Initializes through reading from a datafile.
+**/
+
 /**
  * @brief The main, executes the whole scheme.
  * Firstly we initialize all of our structs and parameters according to the input
@@ -21,12 +26,30 @@
  */
 
 int main (int argc, char* argv[]) {
-    Problem *prob = malloc(sizeof(struct Problem));
-    init(prob, argv);
-    do {
-        do_timestep(prob);
-    } while( !update_time(prob->time, prob->temp) );
+    Problem *p = malloc(sizeof(struct Problem));
+    p->diff_coeff = malloc(sizeof(struct Data));
+    p->vol = malloc(sizeof(struct Data));
+    p->rho = malloc(sizeof(struct Data));
+    p->opacity = malloc(sizeof(struct Data));
+    p->heat_cap = malloc(sizeof(struct Data));
+
+    p->diag = malloc(sizeof(struct Diagnostics));
+    p->mats = malloc(sizeof(struct Materials));
     
-    clean_prog(prob);
+    p->temp = malloc(sizeof(struct Quantity));
+    p->energy = malloc(sizeof(struct Quantity));
+
+    p->time = malloc(sizeof(struct Time));
+
+    p->constants = malloc(sizeof(struct Constants));
+    p->coor = malloc(sizeof(struct Coordinate));
+    
+    init(p, argv);
+    do {
+        do_timestep(p);
+    } while( !update_time(p->time, p->temp) );
+    
+    clean_prog(p);
     return 0;
 }
+

@@ -185,7 +185,10 @@ void init_datafile(Problem *p, char* f_name) {
     ssize_t read;
     while ((read = getline(&line, &len, fp)) != -1) {
         // set up the constants of the problem
-        if (strstr(line, "k_max") != NULL) {
+        if(strstr(line, "sigma_factor") != NULL)
+            p->constants->sigma_factor = double_reader(line, len);
+       
+        else if (strstr(line, "k_max") != NULL) {
             p->coor->K_max = int_reader(line, len);
         } else if(strstr(line, "l_max") != NULL) {
             p->coor->L_max = int_reader(line, len);
@@ -213,15 +216,18 @@ void init_datafile(Problem *p, char* f_name) {
             p->constants->sigma_factor = double_reader(line, len);
         } else if(strstr(line, "T0") != NULL) {
             p->constants->T0 = double_reader(line, len);
-        } else if(strstr(line, "bc_type:") != NULL) {
-            //
+        } else if(strstr(line, "bc_type") != NULL) {
+            printf("??");
         } else if(strstr(line, "num_mats") != NULL) {
             p->mats->num_mats = int_reader(line, len);
         } else if(strstr(line, "mat_type") != NULL) {
             p->mats->mat_type = int_reader(line, len);
+        } else if (strstr(line, "sig_fac") != NULL) {
+                    printf("A!Q@W#E$RTYG\n");
+
+            p->constants->sigma_factor = double_reader(line, len);
         }
     }
-    
     fclose(fp);
 }
 
@@ -275,24 +281,6 @@ void init(Problem *p, char *argv[]) {
     int K_max,L_max,KC_max,LC_max;
     //init_python(p);
     //first we malloc all structures
-    p->diff_coeff = malloc(sizeof(struct Data));
-    p->vol = malloc(sizeof(struct Data));
-    p->rho = malloc(sizeof(struct Data));
-    p->opacity = malloc(sizeof(struct Data));
-    p->heat_cap = malloc(sizeof(struct Data));
-
-    p->diag = malloc(sizeof(struct Diagnostics));
-    p->mats = malloc(sizeof(struct Materials));
-    
-    p->temp = malloc(sizeof(struct Quantity));
-    p->energy = malloc(sizeof(struct Quantity));
-
-    p->time = malloc(sizeof(struct Time));
-
-    p->constants = malloc(sizeof(struct Constants));
-    p->coor = malloc(sizeof(struct Coordinate));
-
-
 
     init_datafile(p, argv[1]);
     p->mats->mat = (Material *) malloc(sizeof(Material) * p->mats->num_mats);
@@ -302,16 +290,13 @@ void init(Problem *p, char *argv[]) {
     }
     printf("Done reading Materials\n");
     
-
-
-
     // WE HAVE IMAGINARY CELLS. SO WE NEED TO ADD FOR THE VERTEX QUANT..
     // + 2 (right and left edge)
     // AND TO CELL QUANTITY + 2 ASWELL (EACH)
     K_max = p->coor->K_max += 2;
     L_max = p->coor->L_max += 2;
-    KC_max = p->diff_coeff->KC_max = p->energy->KC_max = p->vol->KC_max += 2;
-    LC_max = p->diff_coeff->LC_max = p->energy->LC_max = p->vol->LC_max += 2;
+    KC_max = p->diff_coeff->KC_max = p->energy->KC_max = p->temp->KC_max = p->vol->KC_max += 2;
+    LC_max = p->diff_coeff->LC_max = p->energy->LC_max = p->temp->LC_max = p->vol->LC_max += 2;
 
     p->constants->a_rad = 4.0 * p->constants->sigma_boltzman / p->constants->c_light;
     //malloc
@@ -330,16 +315,13 @@ void init(Problem *p, char *argv[]) {
     p->opacity->values    = malloc_2d(KC_max, LC_max);
     p->heat_cap->values   = malloc_2d(KC_max, LC_max);
 
-
     //time
     p->time->cycle = 0;
     p->time->time_passed = p->time->t0;
     //init
     init_mesh_Kershaw1(p->coor->K_max, p->coor->L_max,p->coor->R, p->coor->Z);
-
     for ( i = 0 ; i < KC_max; i++) {
         for (j = 0 ; j < LC_max; j++) {
-             
             p->energy->prev[i][j] = p->energy->current[i][j] = p->temp->prev[i][j] = p->temp->current[i][j] = pow(p->constants->T0, 4) * p->constants->a_rad;
         }
     }
@@ -357,13 +339,13 @@ void init_mesh_Kershaw1(int K_max, int L_max, double **R, double **Z) {
     int i = 0, j = 0;
     for ( i = 0; i < K_max; i++) {
         for (j = 0 ; j < L_max; j++) {
-            R[i][j] = (double) j / (L_max - 1);
+            R[i][j] = (double) j / (K_max - 1);
         }
     }
     
     for ( i = 0 ; i < K_max; i++) {
         for (j = 0 ; j < L_max; j++) {
-            Z[i][j] = (double) i / (K_max - 1);
+            Z[i][j] = (double) i / (L_max - 1);
         }
     }
 }

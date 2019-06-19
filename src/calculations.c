@@ -1,5 +1,7 @@
 #include "calculations.h"
 #include "math.h"
+#include "structs.h"
+#include "utils.h"
 
 /**
  * Calculates the temperature of the material
@@ -42,6 +44,7 @@ void calculate_opacity(Data *opacity,Data *rho, Quantity *T, Materials * mats) {
     double **opac = opacity->values;
     int i_start, i_end, j_start, j_end;
     double g,lambda,alpha;
+    
     for (k = 0; k < mats->num_mats; k++) {
         g = mats->mat[k].g;
         alpha = mats->mat[k].alpha;
@@ -52,7 +55,8 @@ void calculate_opacity(Data *opacity,Data *rho, Quantity *T, Materials * mats) {
         j_end = mats->mat[k].j_end;
         for (i = i_start; i < i_end; i++) {
             for (j = j_start; j < j_end; j++) {
-                opac[i][j] =  pow(density[i][j], lambda + 2.0) / (g * pow(temp[i][j], alpha));
+                //why did i write lambda + 2
+                opac[i][j] =  pow(density[i][j], lambda + 1.0) / (g * pow(temp[i][j], alpha));
             }
         }
     }

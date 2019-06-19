@@ -29,7 +29,7 @@ double avg_harmonic(double x, double y) {
 }
 
 double* malloc_1d(int n) {
-    double * ptr =  (double*) malloc(sizeof(double) * n);
+    double * ptr =  malloc(sizeof(double) * n);
     return ptr;
 }
 
@@ -242,15 +242,14 @@ void jacobi_method_naive(int max_iter, int K, int L, double epsilon, double ***A
             for (j = 1; j < L; j++) {
                 //for (k = 0; k < 10; k++) {
                 //let's write it explicitly Maybe should be A[i][j]
-                sum += A[i - 1][j - 1][0] * x_prev[i + 1][j - 1]; // A[i][j][0] is left bottom.
-                sum += A[i - 1][j - 1][1] * x_prev[i + 1][j];     // A[i][j][1] is bottom.
-                sum += A[i - 1][j - 1][2] * x_prev[i + 1][j + 1]; // A[i][j][2] is right bottom.
-                sum += A[i - 1][j - 1][3] * x_prev[i][j - 1];     // A[i][j][3] is left.
-                sum += A[i - 1][j - 1][5] * x_prev[i][j + 1];     // A[i][j][5] is right.
-                sum += A[i - 1][j - 1][6] * x_prev[i - 1][j - 1]; // A[i][j][6] is left top.
-                sum += A[i - 1][j - 1][7] * x_prev[i - 1][j];     // A[i][j][7] is top.
-                sum += A[i - 1][j - 1][8] * x_prev[i - 1][j + 1]; // A[i][j][8] is top right.
-                //}
+                sum += A[i][j][0] * x_prev[i + 1][j - 1]; // A[i][j][0] is left bottom.
+                sum += A[i][j][1] * x_prev[i + 1][j];     // A[i][j][1] is bottom.
+                sum += A[i][j][2] * x_prev[i + 1][j + 1]; // A[i][j][2] is right bottom.
+                sum += A[i][j][3] * x_prev[i][j - 1];     // A[i][j][3] is left.
+                sum += A[i][j][5] * x_prev[i][j + 1];     // A[i][j][5] is right.
+                sum += A[i][j][6] * x_prev[i - 1][j - 1]; // A[i][j][6] is left top.
+                sum += A[i][j][7] * x_prev[i - 1][j];     // A[i][j][7] is top.
+                sum += A[i][j][8] * x_prev[i - 1][j + 1]; // A[i][j][8] is top right.
                 aii_r = 1.0 / A[i - 1][j - 1][4];
     //            printf("%10e\n", A[i - 1][j - 1][1]);
                 x[i][j] = aii_r * (b[i - 1][j - 1] - sum);

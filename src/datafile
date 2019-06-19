@@ -1,11 +1,11 @@
-k_max 1001
+k_max 501
 l_max 2
-kc_max 1000
+kc_max 500
 lc_max 1
 dt_0 1E-11
 dt_max 1E-11
 dt_factor 0.1
-sigma_factor 1
+sigma_factor 1.0
 t0 0
 time_diagnostic 1E-11
 time_stop 1.5E-9
@@ -16,3 +16,4 @@ T0 300
 bc_type 1
 num_mats 1
 mat_type 1
+sig_fac 1
