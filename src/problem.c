@@ -167,6 +167,7 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
 
             B_lambda[i][j] = (R[i + 1][j + 1] + R[i][j + 1]) 
             / ( D[i][j] * jacobi[i][j] + D[i][j + 1] * jacobi[i][j + 1]);
+            printf("%10e\t%10e\n", B_sigma[i][j], B_lambda[i][j]);
         }
     }
 

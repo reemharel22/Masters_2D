@@ -228,6 +228,7 @@ void init_datafile(Problem *p, char* f_name) {
             p->constants->sigma_factor = double_reader(line, len);
         }
     }
+    
     fclose(fp);
 }
 
@@ -256,15 +257,18 @@ void init_materials_datafile(Material *m, int mat_number) {
         } else if(strstr(line, "i_start") != NULL) {
             m->i_start = int_reader(line, len);
         } else if(strstr(line, "i_end") != NULL) {
-            m->i_end = int_reader(line, len);
+            m->i_end = int_reader(line, len) + 2;
         } else if(strstr(line, "j_start") != NULL) {
             m->j_start = int_reader(line, len);
         } else if(strstr(line, "j_end") != NULL) {
-            m->j_end = int_reader(line, len);
+            m->j_end = int_reader(line, len) + 2;
         } else if(strstr(line, "rho") != NULL) {
             m->init_rho = double_reader(line, len);
         }
     }
+    //normalize g and f
+    m->g = m->g / pow(1160500.0, m->alpha);
+    m->f = m->f / pow(1160500.0, m->beta);
 }
 
 
@@ -339,13 +343,13 @@ void init_mesh_Kershaw1(int K_max, int L_max, double **R, double **Z) {
     int i = 0, j = 0;
     for ( i = 0; i < K_max; i++) {
         for (j = 0 ; j < L_max; j++) {
-            R[i][j] = (double) j / (K_max - 1);
+            R[i][j] = j * dr;
         }
     }
     
     for ( i = 0 ; i < K_max; i++) {
         for (j = 0 ; j < L_max; j++) {
-            Z[i][j] = (double) i / (L_max - 1);
+            Z[i][j] = i * dz;
         }
     }
 }
