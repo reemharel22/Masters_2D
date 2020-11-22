@@ -70,6 +70,7 @@ int update_time(Time *t, Quantity *T) {
 void do_timestep(Problem *p) {
     double ***A, **b;
     //apply_boundary(p->energy->prev, p->boundary_type, p->energy->KC_max, p->energy->LC_max);
+
     apply_boundary(p->temp->prev, p->boundary_type, p->energy->KC_max, p->energy->LC_max);
     calculate_opacity(p->opacity, p->rho, p->temp, p->mats);//with prev
 
@@ -80,13 +81,14 @@ void do_timestep(Problem *p) {
     
     //Calculating the energy.
     A = build_matrix_A(p->coor, p->vol, p->diff_coeff, p->time->dt);
+
     b = build_b_vector(p->energy, p->temp, p->opacity, p->constants, p->time->dt);
     //print_3d(A, p->temp->KC_max, p->temp->LC_max, 10);
-    exit(1);
+
     jacobi_method_naive(1000, p->energy->KC_max, p->energy->LC_max, 1e-10, A, p->energy->current, b);
     //print_2d(p->energy->current, p->temp->KC_max, p->temp->LC_max);
     
-exit(1);
+    exit(1);
     free_3d(A,p->energy->KC_max, p->energy->LC_max);
     calculate_temperature(p->temp, p->energy, p->constants, p->opacity, p->heat_cap, p->time->dt);
 
@@ -167,7 +169,6 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
 
             B_lambda[i][j] = (R[i + 1][j + 1] + R[i][j + 1]) 
             / ( D[i][j] * jacobi[i][j] + D[i][j + 1] * jacobi[i][j + 1]);
-            printf("%10e\t%10e\n", B_sigma[i][j], B_lambda[i][j]);
         }
     }
 

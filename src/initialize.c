@@ -280,13 +280,13 @@ void init_materials_datafile(Material *m, int mat_number) {
  * Third, we allocate the memory.
  * Fourth initialize values.
  */
-void init(Problem *p, char *argv[]) {
+void init(Problem *p, char *datafaile) {
     int i, j;
     int K_max,L_max,KC_max,LC_max;
     //init_python(p);
     //first we malloc all structures
 
-    init_datafile(p, argv[1]);
+    init_datafile(p, datafaile);
     p->mats->mat = (Material *) malloc(sizeof(Material) * p->mats->num_mats);
     for (i = 0; i < p->mats->num_mats; i++) {
         //init_materials_python(&p->mats->mat[i], i);
@@ -341,6 +341,8 @@ void init(Problem *p, char *argv[]) {
  * **/
 void init_mesh_Kershaw1(int K_max, int L_max, double **R, double **Z) {
     int i = 0, j = 0;
+    double dr = 0.01;
+    double dz = 0.01;
     for ( i = 0; i < K_max; i++) {
         for (j = 0 ; j < L_max; j++) {
             R[i][j] = j * dr;

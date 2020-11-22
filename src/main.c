@@ -26,6 +26,7 @@
  */
 
 int main (int argc, char* argv[]) {
+    char * str;
     Problem *p = malloc(sizeof(struct Problem));
     p->diff_coeff = malloc(sizeof(struct Data));
     p->vol = malloc(sizeof(struct Data));
@@ -43,8 +44,14 @@ int main (int argc, char* argv[]) {
 
     p->constants = malloc(sizeof(struct Constants));
     p->coor = malloc(sizeof(struct Coordinate));
-    
-    init(p, argv);
+    if (argc == 1) {
+        str = "datafile";
+    }
+    else {
+        str = argv;
+    }
+    init(p, str);
+
     do {
         do_timestep(p);
     } while( !update_time(p->time, p->temp) );
