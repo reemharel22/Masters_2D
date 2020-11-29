@@ -17,8 +17,8 @@
 int update_time(Time *t, Quantity *T) {
     double ** temp_curr = T->current;
     double ** temp_prev = T->prev;
-    int X = T->KC_max;
-    int Y = T->LC_max;
+    int X = T->nx;
+    int Y = T->ny;
     double T1, T2, max_T = 0, min_T = 0, delta_temp, dt_tag, tmp = 0;
     int i, j;
     
@@ -69,10 +69,12 @@ int update_time(Time *t, Quantity *T) {
  */
 void do_timestep(Problem *p) {
     double ***A, **b;
-    //apply_boundary(p->energy->prev, p->boundary_type, p->energy->KC_max, p->energy->LC_max);
+exit(1);
+    apply_boundary(p->temp->prev, p->boundary_type, p->energy->nx, p->energy->ny);
+    
+    calculate_opacity(p->opacity, p->rho, p->temp, p->mats); //with prev
+    
 
-    apply_boundary(p->temp->prev, p->boundary_type, p->energy->KC_max, p->energy->LC_max);
-    calculate_opacity(p->opacity, p->rho, p->temp, p->mats);//with prev
 
     calculate_diffusion_coefficient(p->diff_coeff, p->opacity, p->constants, 0);
     calculate_heat_capacity(p->heat_cap, p->rho, p->temp, p->mats);
@@ -81,19 +83,21 @@ void do_timestep(Problem *p) {
     
     //Calculating the energy.
     A = build_matrix_A(p->coor, p->vol, p->diff_coeff, p->time->dt);
-
+    print_3d(A, p->temp->nx, p->temp->ny, 10);
     b = build_b_vector(p->energy, p->temp, p->opacity, p->constants, p->time->dt);
-    //print_3d(A, p->temp->KC_max, p->temp->LC_max, 10);
 
-    jacobi_method_naive(1000, p->energy->KC_max, p->energy->LC_max, 1e-10, A, p->energy->current, b);
-    //print_2d(p->energy->current, p->temp->KC_max, p->temp->LC_max);
-    
     exit(1);
-    free_3d(A,p->energy->KC_max, p->energy->LC_max);
+    jacobi_method_naive(1000, p->energy->nx, p->energy->ny, 1e-10, A, p->energy->current, b);
+    //print_2d(p->energy->current, p->temp->nx, p->temp->ny);
+    
+    free_3d(A,p->energy->nx, p->energy->ny);
     calculate_temperature(p->temp, p->energy, p->constants, p->opacity, p->heat_cap, p->time->dt);
 
     update_prev_values(p);
-    free_2d(b, p->energy->LC_max);
+    free_2d(b, p->energy->ny);
+    if (p->time->cycle == 2) {
+        
+    }
     return;
 }
 
@@ -113,36 +117,36 @@ void do_timestep(Problem *p) {
 double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
     int i = 0,j = 0,k;
 
-    int K_max = coor->K_max, L_max = coor->L_max, KC_max = vol->KC_max, LC_max = vol->LC_max;
+    int nxp = coor->nxp, nyp = coor->nyp, nx = vol->nx, ny = vol->ny;
         
     double **volume = vol->values;
     double **R = coor->R;
     double **Z = coor->Z;
     double **D = diff->values;
 
-    double **RK_KL = malloc_2d(K_max, L_max);
-    double **RL_KL = malloc_2d(K_max, L_max);
-    double **ZK_KL = malloc_2d(K_max, L_max);
-    double **ZL_KL = malloc_2d(K_max, L_max);
+    double **RK_KL = malloc_2d(nxp, nyp);
+    double **RL_KL = malloc_2d(nxp, nyp);
+    double **ZK_KL = malloc_2d(nxp, nyp);
+    double **ZL_KL = malloc_2d(nxp, nyp);
     
-    double **rho1 = malloc_2d(K_max, L_max);
-    double **rho2 = malloc_2d(K_max, L_max);
-    double **rho3 = malloc_2d(K_max, L_max);
-    double **rho4 = malloc_2d(K_max, L_max);
+    double **rho1 = malloc_2d(nxp, nyp);
+    double **rho2 = malloc_2d(nxp, nyp);
+    double **rho3 = malloc_2d(nxp, nyp);
+    double **rho4 = malloc_2d(nxp, nyp);
 
-    double **S_sigma = malloc_2d(K_max, L_max);
-    double **S_lambda = malloc_2d(K_max, L_max);
+    double **S_sigma = malloc_2d(nxp, nyp);
+    double **S_lambda = malloc_2d(nxp, nyp);
 
-    double **B_sigma = malloc_2d(KC_max, LC_max);
-    double **B_lambda = malloc_2d(KC_max, LC_max);
+    double **B_sigma = malloc_2d(nx, ny);
+    double **B_lambda = malloc_2d(nx, ny);
 
-    double **jacobi = malloc_2d(K_max, L_max);
-    double ***A = malloc_3d(KC_max, LC_max, 10);
+    double **jacobi = malloc_2d(nxp, nyp);
+    double ***A = malloc_3d(nx, ny, 10);
     
-
+    printf("IAM HERE\n");
     //#pragma omp parallel for default(shared)
-    for(i = 0; i < K_max - 1; i++){
-        for (j = 0; j < L_max - 1; j++) {
+    for(i = 0; i < nxp - 1; i++){
+        for (j = 0; j < nyp - 1; j++) {
 
             RK_KL[i][j] = (R[i + 1][j + 1] - R[i][j] + R[i + 1][j] - R[i][j + 1]) / 2.0;
             RL_KL[i][j] = (R[i + 1][j + 1] - R[i][j] - R[i + 1][j] + R[i][j + 1]) / 2.0;
@@ -155,13 +159,17 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
 
         }
     }
-
+    check_nan_2d(jacobi, nxp, nyp);
+    check_nan_2d(RK_KL, nxp, nyp);
+    check_nan_2d(RL_KL, nxp, nyp);
+    check_nan_2d(ZK_KL, nxp, nyp);
+    check_nan_2d(ZL_KL, nxp, nyp);
 
     // these sizes are cell quantities, therefore we go KC, LC
     // we do not go throught the last imaginary cells, ofc.
     // #pragma omp parallel for default(shared)
-    for(i = 0; i < KC_max - 1; i++){
-        for (j = 0; j < LC_max - 1; j++) {
+    for(i = 0; i < nx - 1; i++){
+        for (j = 0; j < ny - 1; j++) {
             //the reason we take jacob(i,j) is because we already made sigma(i,j)
             // be the same index as jacob(i,j), only R is shifted. see (15)
             B_sigma[i][j] = (R[i + 1][j + 1] + R[i + 1][j]) 
@@ -172,9 +180,9 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
         }
     }
 
-    //for boundary condition the sigma[0][j=0..L] = 0 and for reflective sigma[K_max][j=0..L] = 0
-    for (j = 0; j < LC_max; j++) {
-        B_sigma[KC_max - 1][j] = B_sigma[KC_max - 2][j] = B_sigma[1][j] = B_sigma[0][j] = 0;
+    //for boundary condition the sigma[0][j=0..L] = 0 and for reflective sigma[nxp][j=0..L] = 0
+    for (j = 0; j < ny; j++) {
+        B_sigma[nx - 1][j] = B_sigma[nx - 2][j] = B_sigma[1][j] = B_sigma[0][j] = 0;
     }
     
     //maybe merge with the next loop for speed..
@@ -183,8 +191,8 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
     double sqrt_sigma_ij,sqrt_sigma_i1j, sqrt_lambda_ij, sqrt_lambda_ij1;
     k = 0;
     int im, jm;
-    for(i = 0; i < K_max - 1; i++){
-        for (j = 0; j < L_max - 1; j++) {
+    for(i = 0; i < nxp - 1; i++){
+        for (j = 0; j < nyp - 1; j++) {
             im = maximum(i - 1, 0);
             jm = maximum(j - 1, 0);
             sqrt_sigma_ij   = sqrt( B_sigma[i][j] ); 
@@ -202,8 +210,8 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
     //calculate the small sigma and small lambda
     double r1,r2,r3,r4;
     double z1,z2,z3,z4;
-    for(i = 0; i < K_max - 1; i++){
-        for (j = 0; j < L_max - 1; j++) {
+    for(i = 0; i < nxp - 1; i++){
+        for (j = 0; j < nyp - 1; j++) {
             r1 = RL_KL[i][j]     * RL_KL[i][j] ;
             r2 = RL_KL[i + 1][j] * RL_KL[i+1][j];
             r3 = RK_KL[i][j]     * RK_KL[i][j];
@@ -226,9 +234,9 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
     double a5,a6,a7,a8;
     int p = 0;
     k = 0;
-    for(i = 0; i < KC_max - 1; i++){
+    for(i = 0; i < nx - 1; i++){
         //k is equivilent to i - 1. instead of MAX(i,0)...
-        for (j = 0; j < LC_max - 1; j++) {
+        for (j = 0; j < ny - 1; j++) {
             im = maximum(i - 1, 0);
             jm = maximum(j - 1, 0);
             vol_1 = 1.0 / volume[i][j];
@@ -252,23 +260,24 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
         }
     }
 
-    free_2d(RK_KL, K_max);
-    free_2d(RL_KL, K_max);
-    free_2d(ZK_KL, K_max);
-    free_2d(ZL_KL, K_max);
+    free_2d(RK_KL, nxp);
+    free_2d(RL_KL, nxp);
+    free_2d(ZK_KL, nxp);
+    free_2d(ZL_KL, nxp);
 
-    free_2d(rho1, K_max);
-    free_2d(rho2, K_max);
-    free_2d(rho3, K_max);
-    free_2d(rho4, K_max);
+    free_2d(rho1, nxp);
+    free_2d(rho2, nxp);
+    free_2d(rho3, nxp);
+    free_2d(rho4, nxp);
 
-    free_2d(B_sigma, K_max);
-    free_2d(B_lambda, K_max);
-    free_2d(S_sigma, KC_max);
-    free_2d(S_lambda, KC_max);
+    free_2d(B_sigma, nxp);
+    free_2d(B_lambda, nxp);
+    free_2d(S_sigma, nx);
+    free_2d(S_lambda, nx);
     
-    free_2d(jacobi, KC_max);
-        
+    free_2d(jacobi, nx);
+    printf("Done with the buildA matrix\n");
+    print_3d(nxp, nyp, 10, A);
     return A;
 }
 
@@ -315,8 +324,8 @@ void apply_boundary(double **data, int boundary_type, int n, int m) {
 */
 double **build_b_vector(Quantity *E, Quantity *T, Data *opac, Constants *consts, double dt) {
     int i, j;
-    int X = T->KC_max;
-    int Y = T->LC_max;
+    int X = T->nx;
+    int Y = T->ny;
     double c = consts->c_light;
     double sigma_factor = consts->sigma_factor;
     double **b = malloc_2d(X, Y);
@@ -334,8 +343,8 @@ double **build_b_vector(Quantity *E, Quantity *T, Data *opac, Constants *consts,
 
 void update_prev_values(Problem * p) {
     int i, j;
-    int X = p->temp->KC_max;
-    int Y = p->temp->LC_max;
+    int X = p->temp->nx;
+    int Y = p->temp->ny;
 
     double **t_prev = p->temp->prev;
     double **t_curr = p->temp->current;

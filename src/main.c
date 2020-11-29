@@ -51,7 +51,6 @@ int main (int argc, char* argv[]) {
         str = argv;
     }
     init(p, str);
-
     do {
         do_timestep(p);
     } while( !update_time(p->time, p->temp) );

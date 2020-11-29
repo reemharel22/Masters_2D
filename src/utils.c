@@ -77,6 +77,34 @@ void write_to_file(char* f_name, double * values, int n) {
     
 }
 
+double check_nan_2d(double **arr, int nx, int ny){
+    int i, j; 
+    for (i = 0; i < nx; i++) {
+        for (j = 0; j < ny; j++) {
+            if (arr[i][j] != arr[i][j]) {
+                printf("Found NaN with i: %d and j: %d", i,j);
+                return;
+            }
+        }
+    }
+    printf("NaN not found!\n");
+}
+
+double check_nan_3d(double ***arr, int nx, int ny, int nz) {
+    int i, j,k; 
+    for (i = 0; i < nx; i++) {
+        for (j = 0; j < ny; j++) {
+            for (k = 0; k < nz; k++) {
+                if (arr[i][j][k] != arr[i][j][k]) {
+                    printf("Found NaN with i: %d and j: %d", i,j);
+                    return;
+                }
+            }
+        }
+    }
+    printf("NaN not found!\n");
+}
+
 void write_to_file_mesh(char * f_name, double **X, double **
 Y, int n, int m) {
     int i,j;
@@ -89,21 +117,21 @@ Y, int n, int m) {
     fclose(f);
 }
 
-void print_matrix_row(int K, int L, double**val) {
+void print_matrix_row(int nx, int ny, double**val) {
     int i,j;
-    for( i = 0; i < K; i++) {
-        for( j = 0; j < L; j++){
+    for( i = 0; i < nx; i++) {
+        for( j = 0; j < ny; j++){
             printf("%lf\n",val[i][j]);
         }
         printf("\nend row: %d\n",i);
     }
 } 
 
-void print_matrix_col(int K, int L, double**val) {
+void print_matrix_col(int nx, int ny, double**val) {
     int i,j;
     
-    for( j = 0; j < L; j++){
-        for( i = 0; i < K; i++) {
+    for( j = 0; j < ny; j++){
+        for( i = 0; i < nx; i++) {
             printf("%lf\n",val[i][j]);
         }
         printf("end col: %d\n",j);
@@ -112,24 +140,23 @@ void print_matrix_col(int K, int L, double**val) {
 } 
 
 
-void print_2d(double **arr, int K, int L) {
+void print_2d(double **arr, int nx, int ny) {
     int i,j;
-    for (i = 0; i < K; i++) {
-        for (j = 0; j < L; j++) {
+    for (i = 0; i < nx; i++) {
+        for (j = 0; j < ny; j++) {
             printf("%10e\t", arr[i][j]);
         }
         printf("\n");
     }
 }
 
-void print_3d(int K, int L, int Q, double ***arr) {
+void print_3d(double ***arr, int nx, int ny, int Q) {
     int i, j, k;
-    for (i = 0; i < K; i++) {
-        for (j = 0; j < L; j++) {
+    for (i = 0; i < nx; i++) {
+        for (j = 0; j < ny; j++) {
             for (k = 0; k < Q; k++) {
-                printf("%10e\t", arr[i][j]);
+                printf("%10e\t", arr[i][j][k]);
             }
-            
         }
         printf("\n");
     }
@@ -182,15 +209,15 @@ int n, int m) {
  * b pointer to the vector
  * input is a pointer to the matrix
  */
-void gauss_seidel_method(int max_iter, int K, int L, double epsilon, double ***A, double **x, double **b) {
+void gauss_seidel_method(int max_iter, int nx, int ny, double epsilon, double ***A, double **x, double **b) {
     int i, j;
     double sum;
     int iter;
     double aii_r;
     for (iter = 0; iter < max_iter; iter++) {
         // n^2 is i to j...
-        for (i = 0; i < K; i++) {
-            for (j = 0; j < K; j++) {
+        for (i = 0; i < nx; i++) {
+            for (j = 0; j < nx; j++) {
                 sum = 0.0;
                 //for (k = 0; k < 10; k++) {
                 //let's write it explicitly
@@ -222,24 +249,24 @@ void gauss_seidel_method(int max_iter, int K, int L, double epsilon, double ***A
  * input is a pointer to the matrix
  * 
  */
-void jacobi_method_naive(int max_iter, int K, int L, double epsilon, double ***A, double **x, double **b) {
+void jacobi_method_naive(int max_iter, int nx, int ny, double epsilon, double ***A, double **x, double **b) {
     int i, j, iter;
     double sum;
     double aii_r;
     double ** x_prev;
-    x_prev = malloc_2d(K + 1, L + 1);
+    x_prev = malloc_2d(nx + 1, ny + 1);
     double **tmp;
-    for (i = 0; i < K; i++){
-        for (j = 0; j < L; j++) {
+    for (i = 0; i < nx; i++){
+        for (j = 0; j < ny; j++) {
             x_prev[i][j] = x[i][j];
         }
     }
-  //  print_2d(K, L, x_prev);
+  //  print_2d(nx, ny, x_prev);
     for (iter = 0; iter < max_iter; iter++) {
         // n^2 is i to j...
-        for (i = 1; i < K; i++) {
+        for (i = 1; i < nx; i++) {
             sum = 0.0;
-            for (j = 1; j < L; j++) {
+            for (j = 1; j < ny; j++) {
                 //for (k = 0; k < 10; k++) {
                 //let's write it explicitly Maybe should be A[i][j]
                 sum += A[i][j][0] * x_prev[i + 1][j - 1]; // A[i][j][0] is left bottom.
@@ -255,22 +282,22 @@ void jacobi_method_naive(int max_iter, int K, int L, double epsilon, double ***A
                 x[i][j] = aii_r * (b[i - 1][j - 1] - sum);
             }
         }
-        if (converge(K, L, epsilon, x_prev, x)) {
-            free_2d(x_prev, K);
+        if (converge(nx, ny, epsilon, x_prev, x)) {
+            free_2d(x_prev, nx);
             return;
         }
         tmp = x_prev;
         x_prev = x;
         x = tmp;
     }
-    free_2d(x_prev, K);
+    free_2d(x_prev, nx);
 }
 
-int converge(int K, int L, double epsilon, double **x_prev, double** x_current) {
+int converge(int nx, int ny, double epsilon, double **x_prev, double** x_current) {
     int i, j;
     double diff,sqdiff = 0.0;
-    for (i = 0; i < K; i++) {
-        for (j = 0; j < L; j++) {
+    for (i = 0; i < nx; i++) {
+        for (j = 0; j < ny; j++) {
             diff = x_prev[i][j] - x_current[i][j];
             sqdiff += diff * diff;
         }

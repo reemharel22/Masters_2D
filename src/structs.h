@@ -9,8 +9,8 @@
  * @brief the data struct which holds the 2d array that holds the values..
  */
 typedef struct Data {
-    int KC_max;
-    int LC_max;
+    int nx;
+    int ny;
     double **values;
 } Data;
 
@@ -20,8 +20,8 @@ typedef struct Data {
  * real data is 1.... to KC_max/LC_max - 1
  */
 typedef struct Quantity {
-    int KC_max;         //!< Number of values in the K (X) direction. INCLUDES THE IMAGINARY CELLS.
-    int LC_max;         //!< Number of values in the L (Y) direction. INCLUDES THE IMAGINARY CELLS.
+    int nx;         //!< Number of values in the K (X) direction. INCLUDES THE IMAGINARY CELLS.
+    int ny;         //!< Number of values in the L (Y) direction. INCLUDES THE IMAGINARY CELLS.
     double **current; //!< Current energy values.
     double **prev;     //!< Last time step energy values.
 } Quantity;
@@ -31,8 +31,8 @@ typedef struct Quantity {
  * real data is 1.... to K_max/L_max -1
  */
 typedef struct Coordinate {
-    int K_max;  //!< Number of values in the K (X) direction. INCLUDES THE IMAGINARY CELLS.
-    int L_max;  //!< Number of values in the L (Y) direction. INCLUDES THE IMAGINARY CELLS.
+    int nxp;  //!< Number of values in the K (X) direction. INCLUDES THE IMAGINARY CELLS.
+    int nyp;  //!< Number of values in the L (Y) direction. INCLUDES THE IMAGINARY CELLS.
     double **R;//!< R axis values data.
     double **Z;//!< Z axis values data.
 } Coordinate;

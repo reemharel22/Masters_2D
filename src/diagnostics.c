@@ -14,8 +14,8 @@ void diagnostics(Problem *p) {
 }
 
 void diagnostic_Quantity_2d(Quantity *Q,double t,  char*f_name) {
-    int X = Q->KC_max;
-    int Y = Q->LC_max;
+    int X = Q->nx;
+    int Y = Q->ny;
     int i, j;
    // FILE*fp = fopen(f_name, "w");
     for (i = 0; i < X; i++) {
@@ -26,7 +26,7 @@ void diagnostic_Quantity_2d(Quantity *Q,double t,  char*f_name) {
 }
 
 void diagnostic_Quantity_1d(Quantity *Q, double t, int y, char*f_name) {
-    int X = Q->KC_max;
+    int X = Q->nx;
     int i;
     FILE*fp = fopen(f_name, "w");
     fprintf(fp, "%10e ", t);

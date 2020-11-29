@@ -1,5 +1,5 @@
-CC := gcc
-CFLAGS := -fopenmp -g -O2 
+CC := @gcc
+CFLAGS := -fopenmp -g -O2 -w
 LDFLAGS := -lm -O2
 DEPS := utils.o problem.o initialize.o calculations.o diagnostics.o
 

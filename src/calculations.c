@@ -9,8 +9,8 @@
 */
 void calculate_temperature(Quantity *T, Quantity *E, Constants *consts, Data *opac, Data *heat_cap, double dt) {
     int i, j;
-    int X = T->KC_max;
-    int Y = T->LC_max;
+    int X = T->nx;
+    int Y = T->ny;
     double arad, c, coeff;
     double **temp_curr, **temp_prev, **energy, **opacity, **cv;
     temp_curr = T->current;
@@ -68,8 +68,8 @@ void calculate_opacity(Data *opacity,Data *rho, Quantity *T, Materials * mats) {
 */
 void calculate_heat_capacity(Data *heat_cap,Data *rho, Quantity *T, Materials * mats) {
     int i, j, k = 0;
-    int X = T->KC_max;
-    int Y = T->LC_max;
+    int X = T->nx;
+    int Y = T->ny;
     double **temp = T->prev;
     double **density = rho->values;
     double **cv = heat_cap->values;
@@ -104,8 +104,8 @@ void calculate_diffusion_coefficient(Data* diff, Data *opac, Constants *consts, 
     double c = consts->c_light;
     double **opacity = opac->values;
     double **diff_c = diff->values;
-    int X = diff->KC_max;
-    int Y = diff->LC_max;
+    int X = diff->nx;
+    int Y = diff->ny;
     //including boundary cells
     for (i = 0; i < X; i++) {
         for (j = 0; j < Y; j++) {
