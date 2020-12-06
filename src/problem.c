@@ -70,7 +70,6 @@ int update_time(Time *t, Quantity *T) {
 void do_timestep(Problem *p) {
     double ***A, **b;
     apply_boundary(p->temp->prev, p->boundary_type, p->energy->nx, p->energy->ny);
-
     // @@@ DEBUG
     check_nan_2d(p->temp->prev,  p->energy->nx, p->energy->ny, "Temp prev");
     check_nan_2d(p->energy->prev,  p->energy->nx, p->energy->ny, "Energy prev");
@@ -95,7 +94,8 @@ void do_timestep(Problem *p) {
     // @@@ DEBUG
 
     //apply boundary on the energy and temperature
-    
+
+
     //Calculating the energy.
     A = build_matrix_A(p->coor, p->vol, p->diff_coeff, p->time->dt);
     print_3d(A, p->temp->nx, p->temp->ny, 10);
@@ -159,7 +159,6 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
 
     double **jacobi = malloc_2d(nxp, nyp);
     double ***A = malloc_3d(nx, ny, 10);
-    
     //#pragma omp parallel for default(shared)
     for(i = 0; i < nxp - 1; i++){
         for (j = 0; j < nyp - 1; j++) {
@@ -168,10 +167,10 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
 
             ZK_KL[i][j] = (Z[i + 1][j + 1] - Z[i][j] + Z[i + 1][j] - Z[i][j + 1]) / 2.0;
             ZL_KL[i][j] = (Z[i + 1][j + 1] - Z[i][j] - Z[i + 1][j] + Z[i][j + 1]) / 2.0;
-            
+            // printf("hey %10e\t%10e\t%10e\t%10e\n",RK_KL[i][j],RL_KL[i][j],ZK_KL[i][j],ZL_KL[i][j]);
             //calclulate jacobian..
             jacobi[i][j] = RK_KL[i][j] * ZL_KL[i][j] - RL_KL[i][j] * ZK_KL[i][j];
-
+            
         }
     }
     check_nan_2d(jacobi, nxp, nyp,"jacobi");
@@ -179,10 +178,13 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
     check_nan_2d(RL_KL, nxp, nyp,"RLKL");
     check_nan_2d(ZK_KL, nxp, nyp,"ZKKL");   
     check_nan_2d(ZL_KL, nxp, nyp,"ZLKL");
-
+            // printf("B_sigma %s \t %d\n",jacobi[nx-1][j], j);    
     // these sizes are cell quantities, therefore we go KC, LC
     // we do not go throught the last imaginary cells, ofc.
     // #pragma omp parallel for default(shared)
+
+    printf("before\n");
+
     for(i = 0; i < nx - 1; i++){
         for (j = 0; j < ny - 1; j++) {
             //the reason we take jacob(i,j) is because we already made sigma(i,j)
@@ -192,15 +194,22 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
 
             B_lambda[i][j] = (R[i + 1][j + 1] + R[i][j + 1]) 
             / ( D[i][j] * jacobi[i][j] + D[i][j + 1] * jacobi[i][j + 1]);
+                        printf("hey %10e\n",B_lambda[i][j]);
+
         }
     }
+    printf("done\n");
   check_nan_2d(jacobi, nxp, nyp,"B_lambda");
+  check_nan_2d(B_sigma, nxp, nyp,"B_sigma");
     //for boundary condition the sigma[0][j=0..L] = 0 and for reflective sigma[nxp][j=0..L] = 0
+printf("before\n");
     for (j = 0; j < ny; j++) {
+        printf("B_sigma %10e\n",B_sigma[nx-1][j]);
         B_sigma[nx - 1][j] = B_sigma[nx - 2][j] = B_sigma[1][j] = B_sigma[0][j] = 0;
     }
-        check_nan_2d(B_sigma, nxp, nyp, "B_sigma");
+            
 
+        check_nan_2d(B_sigma, nxp, nyp, "B_sigma");
     //maybe merge with the next loop for speed..
     //calculate the rhos
     double C_KL;

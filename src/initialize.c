@@ -262,6 +262,7 @@ void init_materials_datafile(Material *m, int mat_number) {
             m->j_start = int_reader(line, len);
         } else if(strstr(line, "j_end") != NULL) {
             m->j_end = int_reader(line, len) + 2;
+            
         } else if(strstr(line, "rho") != NULL) {
             m->init_rho = double_reader(line, len);
         }
@@ -304,13 +305,13 @@ void init(Problem *p, char *datafaile) {
 
     p->constants->a_rad = 4.0 * p->constants->sigma_boltzman / p->constants->c_light;
     //malloc
-    p->coor->R = malloc_2d(nxp, nyp );
-    p->coor->Z = malloc_2d(nxp, nyp );
+    p->coor->R = malloc_2d(nxp, nyp);
+    p->coor->Z = malloc_2d(nxp, nyp);
     
-    p->energy->current = malloc_2d(nx, ny );
-    p->energy->prev    = malloc_2d(nx, ny );
-    p->temp->current   = malloc_2d(nx, ny );
-    p->temp->prev      = malloc_2d(nx, ny );
+    p->energy->current = malloc_2d(nx, ny);
+    p->energy->prev    = malloc_2d(nx, ny);
+    p->temp->current   = malloc_2d(nx, ny);
+    p->temp->prev      = malloc_2d(nx, ny);
 
     p->vol->values = malloc_2d(nx, ny);
     p->rho->values = malloc_2d(nx, ny);
@@ -329,7 +330,6 @@ void init(Problem *p, char *datafaile) {
             p->energy->prev[i][j] = p->energy->current[i][j] = p->temp->prev[i][j] = p->temp->current[i][j] = pow(p->constants->T0, 4) * p->constants->a_rad;
         }
     }
-
     mesh_square_volume(p->vol->values, p->coor->R,p->coor->Z, nx, ny);
     init_density(p->mats, p->rho);
     diagnostics_initial(p);

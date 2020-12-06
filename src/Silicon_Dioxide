@@ -5,7 +5,8 @@ beta 1.1
 lambda 0.75
 mu 0.09
 i_start 0
-i_end 500
+i_end 50
 rho 50E-3
 j_start 0
 j_end 1
+ww
