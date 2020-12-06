@@ -77,17 +77,17 @@ void write_to_file(char* f_name, double * values, int n) {
     
 }
 
-double check_nan_2d(double **arr, int nx, int ny){
+double check_nan_2d(double **arr, int nx, int ny, char* str){
     int i, j; 
     for (i = 0; i < nx; i++) {
         for (j = 0; j < ny; j++) {
             if (arr[i][j] != arr[i][j]) {
-                printf("Found NaN with i: %d and j: %d", i,j);
+                printf("Found NaN in %s!.\t  Position: with i: %d and j: %d\n",str,  i, j);
                 return;
             }
         }
     }
-    printf("NaN not found!\n");
+    // printf("NaN not found!\n");
 }
 
 double check_nan_3d(double ***arr, int nx, int ny, int nz) {

@@ -69,16 +69,31 @@ int update_time(Time *t, Quantity *T) {
  */
 void do_timestep(Problem *p) {
     double ***A, **b;
-exit(1);
     apply_boundary(p->temp->prev, p->boundary_type, p->energy->nx, p->energy->ny);
-    
-    calculate_opacity(p->opacity, p->rho, p->temp, p->mats); //with prev
-    
 
+    // @@@ DEBUG
+    check_nan_2d(p->temp->prev,  p->energy->nx, p->energy->ny, "Temp prev");
+    check_nan_2d(p->energy->prev,  p->energy->nx, p->energy->ny, "Energy prev");
+    // @@@ DEBUG
+
+    calculate_opacity(p->opacity, p->rho, p->temp, p->mats); //with prev
+    // @@@ DEBUG
+        check_nan_2d(p->opacity->values,  p->opacity->nx, p->opacity->ny,"Opacity");
+        check_nan_2d(p->rho->values,  p->rho->nx, p->rho->ny, "Rho");
+    // @@@ DEBUG
 
     calculate_diffusion_coefficient(p->diff_coeff, p->opacity, p->constants, 0);
+    // @@@ DEBUG
+        check_nan_2d(p->diff_coeff->values,  p->diff_coeff->nx, p->diff_coeff->ny, "Diff coeff");
+    // @@@ DEBUG
+
+
+
     calculate_heat_capacity(p->heat_cap, p->rho, p->temp, p->mats);
-    
+        // @@@ DEBUG
+        check_nan_2d(p->heat_cap->values,  p->heat_cap->nx, p->heat_cap->ny,"Heat capacity");
+    // @@@ DEBUG
+
     //apply boundary on the energy and temperature
     
     //Calculating the energy.
@@ -115,10 +130,12 @@ exit(1);
  * 5. Calculates the matrix A by 17a-17f.
  */
 double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
-    int i = 0,j = 0,k;
+    int i = 0,j = 0, k;
 
-    int nxp = coor->nxp, nyp = coor->nyp, nx = vol->nx, ny = vol->ny;
-        
+    int nxp = coor->nxp;
+    int nyp = coor->nyp;
+    int nx = vol->nx;
+    int ny = vol->ny;
     double **volume = vol->values;
     double **R = coor->R;
     double **Z = coor->Z;
@@ -143,11 +160,9 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
     double **jacobi = malloc_2d(nxp, nyp);
     double ***A = malloc_3d(nx, ny, 10);
     
-    printf("IAM HERE\n");
     //#pragma omp parallel for default(shared)
     for(i = 0; i < nxp - 1; i++){
         for (j = 0; j < nyp - 1; j++) {
-
             RK_KL[i][j] = (R[i + 1][j + 1] - R[i][j] + R[i + 1][j] - R[i][j + 1]) / 2.0;
             RL_KL[i][j] = (R[i + 1][j + 1] - R[i][j] - R[i + 1][j] + R[i][j + 1]) / 2.0;
 
@@ -159,11 +174,11 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
 
         }
     }
-    check_nan_2d(jacobi, nxp, nyp);
-    check_nan_2d(RK_KL, nxp, nyp);
-    check_nan_2d(RL_KL, nxp, nyp);
-    check_nan_2d(ZK_KL, nxp, nyp);
-    check_nan_2d(ZL_KL, nxp, nyp);
+    check_nan_2d(jacobi, nxp, nyp,"jacobi");
+    check_nan_2d(RK_KL, nxp, nyp, "RKKL");
+    check_nan_2d(RL_KL, nxp, nyp,"RLKL");
+    check_nan_2d(ZK_KL, nxp, nyp,"ZKKL");   
+    check_nan_2d(ZL_KL, nxp, nyp,"ZLKL");
 
     // these sizes are cell quantities, therefore we go KC, LC
     // we do not go throught the last imaginary cells, ofc.
@@ -179,12 +194,13 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
             / ( D[i][j] * jacobi[i][j] + D[i][j + 1] * jacobi[i][j + 1]);
         }
     }
-
+  check_nan_2d(jacobi, nxp, nyp,"B_lambda");
     //for boundary condition the sigma[0][j=0..L] = 0 and for reflective sigma[nxp][j=0..L] = 0
     for (j = 0; j < ny; j++) {
         B_sigma[nx - 1][j] = B_sigma[nx - 2][j] = B_sigma[1][j] = B_sigma[0][j] = 0;
     }
-    
+        check_nan_2d(B_sigma, nxp, nyp, "B_sigma");
+
     //maybe merge with the next loop for speed..
     //calculate the rhos
     double C_KL;
@@ -206,6 +222,10 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt) {
             rho4[i][j]      = sqrt_sigma_ij  * sqrt_lambda_ij1 * C_KL;
         }
     }
+            check_nan_2d(rho1, nxp, nyp, "rho1");
+            check_nan_2d(rho2, nxp, nyp, "rho2");
+            check_nan_2d(rho3, nxp, nyp, "rho3");
+            check_nan_2d(rho4, nxp, nyp, "rho4");
 
     //calculate the small sigma and small lambda
     double r1,r2,r3,r4;

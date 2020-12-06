@@ -298,14 +298,14 @@ void init(Problem *p, char *datafaile) {
     // AND TO CELL QUANTITY + 2 ASWELL (EACH)
     nxp = p->coor->nxp += 2;
     nyp = p->coor->nyp += 2;
-    nx = p->diff_coeff->nx = p->energy->nx = p->temp->nx = p->vol->nx += 2;
-    ny = p->diff_coeff->ny = p->energy->ny = p->temp->ny = p->vol->ny += 2;
+    // VOLUME NEEDS TO BE LAST!!!!!!!!!!!
+    nx = p->diff_coeff->nx = p->energy->nx = p->temp->nx = p->rho->nx = p->heat_cap->nx = p->opacity->nx = p->vol->nx += 2;
+    ny = p->diff_coeff->ny = p->energy->ny = p->temp->ny = p->rho->ny = p->heat_cap->ny = p->opacity->ny = p->vol->ny += 2;
 
     p->constants->a_rad = 4.0 * p->constants->sigma_boltzman / p->constants->c_light;
     //malloc
     p->coor->R = malloc_2d(nxp, nyp );
     p->coor->Z = malloc_2d(nxp, nyp );
-    
     
     p->energy->current = malloc_2d(nx, ny );
     p->energy->prev    = malloc_2d(nx, ny );
@@ -322,7 +322,6 @@ void init(Problem *p, char *datafaile) {
     //time
     p->time->cycle = 0;
     p->time->time_passed = p->time->t0;
-    
     //init
     init_mesh_Kershaw1(p->coor->nxp, p->coor->nyp,p->coor->R, p->coor->Z);
     for ( i = 0 ; i < nx; i++) {
@@ -330,10 +329,11 @@ void init(Problem *p, char *datafaile) {
             p->energy->prev[i][j] = p->energy->current[i][j] = p->temp->prev[i][j] = p->temp->current[i][j] = pow(p->constants->T0, 4) * p->constants->a_rad;
         }
     }
-    
+
     mesh_square_volume(p->vol->values, p->coor->R,p->coor->Z, nx, ny);
     init_density(p->mats, p->rho);
     diagnostics_initial(p);
+    printf("Done init\n");
 }
 
 /**

@@ -27,6 +27,6 @@ int int_reader(char *str, int len);
 int* int_array_reader(char *str, int len);
 double double_reader(char *str, int len);
 double* double_array_reader(char *str, int len);
-double check_nan_2d(double **arr, int K, int L);
+double check_nan_2d(double **arr, int K, int L, char* s);
 double check_nan_3d(double ***arr, int K, int L, int Q);
 #endif
