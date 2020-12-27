@@ -4,12 +4,6 @@
 
 void diagnostics(Problem *p) {
     Diagnostics *d = &(p->diag);
-    if (p->time->time_passed > d->time_print) {
-        d->time_print *= 2;
-        
-    } else {
-
-    }
     
 }
 
@@ -25,14 +19,34 @@ void diagnostic_Quantity_2d(Quantity *Q,double t,  char*f_name) {
     }
 }
 
-void diagnostic_Quantity_1d(Quantity *Q, double t, int y, char*f_name) {
+void diagnostic_Quantity_1d(Quantity *Q, double time, int y, FILE*fp) {
     int X = Q->nx;
     int i;
-    FILE*fp = fopen(f_name, "w");
-    fprintf(fp, "%10e ", t);
-    for (i = 0; i < X; i++) {
+    fprintf(fp, "%10e ", time);
+    for (i = 1; i < X - 1; i++) {
         fprintf(fp, "%10e ", Q->current[i][y]);
     }
+    fprintf(fp, "\n");
+}
+
+void diagnostic_energy_1d(Quantity *Q, double arad, double time, int y, FILE*fp) {
+    int X = Q->nx;
+    int i;
+    fprintf(fp, "%10e ", time);
+    for (i = 1; i < X - 1; i++) {
+        fprintf(fp, "%10e ", pow(Q->current[i][y]/arad, 0.25));
+    }
+    fprintf(fp, "\n");
+}
+
+void diagnostic_temp_1d(Quantity *Q, double arad, double time, int y, FILE*fp) {
+    int X = Q->nx;
+    int i;
+    fprintf(fp, "%10e ", time);
+    for (i = 1; i < X - 1; i++) {
+        fprintf(fp, "%10e ", arad * pow(Q->current[i][y], 4));
+    }
+    fprintf(fp, "\n");
 }
 
 void diagnostics_initial(Problem *p) {

@@ -183,6 +183,9 @@ void init_datafile(Problem *p, char* f_name) {
     int num_type, num_mats;
     size_t len = 0;
     ssize_t read;
+    double xmax;
+    double ymax;
+    p->constants->source = 0;
     while ((read = getline(&line, &len, fp)) != -1) {
         // set up the constants of the problem
         if(strstr(line, "sigma_factor") != NULL)
@@ -210,7 +213,9 @@ void init_datafile(Problem *p, char* f_name) {
             p->time->time_stop = double_reader(line, len);
         } else if(strstr(line, "sigma_boltzman") != NULL) {
             p->constants->sigma_boltzman = double_reader(line, len);
-        } else if(strstr(line, "c") != NULL) {
+        } else if(strstr(line, "source") != NULL) {
+            p->constants->source = double_reader(line, len);
+        } else if(strstr(line, "c_light") != NULL) {
             p->constants->c_light = double_reader(line, len);
         } else if(strstr(line, "sigma_factor") != NULL) {
             p->constants->sigma_factor = double_reader(line, len);
@@ -219,16 +224,20 @@ void init_datafile(Problem *p, char* f_name) {
         } else if(strstr(line, "bc_type") != NULL) {
             printf("??");
         } else if(strstr(line, "num_mats") != NULL) {
-            p->mats->num_mats = int_reader(line, len);
+            p->mats->num_mats = double_reader(line, len);
         } else if(strstr(line, "mat_type") != NULL) {
             p->mats->mat_type = int_reader(line, len);
+        } else if(strstr(line, "xmax") != NULL) {
+            xmax = int_reader(line, len);
         } else if (strstr(line, "sig_fac") != NULL) {
                     printf("A!Q@W#E$RTYG\n");
-
             p->constants->sigma_factor = double_reader(line, len);
         }
     }
-    
+    p->coor->nxp = p->vol->nx + 1;
+    p->coor->nyp = p->vol->ny + 1;
+    p->constants->dr = xmax / (p->coor->nxp + 2) ;
+
     fclose(fp);
 }
 
@@ -236,7 +245,7 @@ void init_materials_datafile(Material *m, int mat_number) {
     FILE *fp;
     char * line = NULL;
   //  if (mat_number == 1) {
-        fp = fopen("Silicon_Dioxide", "r");//SILICON DIOXIDE
+        fp = fopen("Su_olson", "r");//SILICON DIOXIDE
    // }
     size_t len = 0;
     ssize_t read;
@@ -268,8 +277,8 @@ void init_materials_datafile(Material *m, int mat_number) {
         }
     }
     //normalize g and f
-    m->g = m->g / pow(1160500.0, m->alpha);
-    m->f = m->f / pow(1160500.0, m->beta);
+    // m->g = m->g / pow(1160500.0, m->alpha);
+    // m->f = m->f / pow(1160500.0, m->beta);
 }
 
 
@@ -291,6 +300,12 @@ void init(Problem *p, char *datafaile) {
     p->mats->mat = (Material *) malloc(sizeof(Material) * p->mats->num_mats);
     for (i = 0; i < p->mats->num_mats; i++) {
         init_materials_datafile(&p->mats->mat[i], p->mats->mat_type);
+    }
+    if (p->mats->num_mats == 1) {
+        p->mats->mat[0].i_start = 0;
+        p->mats->mat[0].j_start = 0;
+        p->mats->mat[0].i_end = p->vol->nx + 2; 
+        p->mats->mat[0].j_end = p->vol->ny + 2; 
     }
     printf("Done reading Materials\n");
     
@@ -324,10 +339,10 @@ void init(Problem *p, char *datafaile) {
     p->time->cycle = 0;
     p->time->time_passed = p->time->t0;
     //init
-    init_mesh_Kershaw1(p->coor->nxp, p->coor->nyp,p->coor->R, p->coor->Z);
+    init_mesh_Kershaw1(p->coor->nxp, p->coor->nyp,p->coor->R, p->coor->Z, p->constants->dr);
     for ( i = 0 ; i < nx; i++) {
         for (j = 0 ; j < ny; j++) {
-            p->energy->prev[i][j] = p->energy->current[i][j] = p->temp->prev[i][j] = p->temp->current[i][j] = pow(p->constants->T0, 4) * p->constants->a_rad;
+            p->energy->prev[i][j] = p->energy->current[i][j] = p->temp->prev[i][j] = p->temp->current[i][j] = 1E-20;//pow(p->constants->T0, 4) * p->constants->a_rad;
         }
     }
     mesh_square_volume(p->vol->values, p->coor->R,p->coor->Z, nx, ny);
@@ -340,19 +355,18 @@ void init(Problem *p, char *datafaile) {
  * @brief Initailizes the mesh so that it will have constant delta R and delta Z
  * 
  * **/
-void init_mesh_Kershaw1(int nxp, int nyp, double **R, double **Z) {
+void init_mesh_Kershaw1(int nxp, int nyp, double **R, double **Z, double dr) {
     int i = 0, j = 0;
-    double dr = 0.01;
-    double dz = 0.01;
+    double dz = 0.1;
     for ( i = 0; i < nxp; i++) {
         for (j = 0 ; j < nyp; j++) {
-            R[i][j] = j * dr;
+            R[i][j] =  i * dr;
         }
     }
     
     for ( i = 0 ; i < nxp; i++) {
         for (j = 0 ; j < nyp; j++) {
-            Z[i][j] = i * dz;
+            Z[i][j] = j * dz;
         }
     }
 }

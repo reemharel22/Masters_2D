@@ -77,32 +77,32 @@ void write_to_file(char* f_name, double * values, int n) {
     
 }
 
-double check_nan_2d(double **arr, int nx, int ny, char* str){
+void check_nan_2d(double **arr, int nx, int ny, char* str){
     int i, j; 
     for (i = 0; i < nx; i++) {
         for (j = 0; j < ny; j++) {
             if (arr[i][j] != arr[i][j]) {
                 printf("Found NaN in %s!.\t  Position: with i: %d and j: %d\n",str,  i, j);
-                return;
+                exit(1);
             }
         }
     }
     // printf("NaN not found!\n");
 }
 
-double check_nan_3d(double ***arr, int nx, int ny, int nz) {
+void check_nan_3d(double ***arr, int nx, int ny, int nz) {
     int i, j,k; 
     for (i = 0; i < nx; i++) {
         for (j = 0; j < ny; j++) {
             for (k = 0; k < nz; k++) {
                 if (arr[i][j][k] != arr[i][j][k]) {
-                    printf("Found NaN with i: %d and j: %d", i,j);
+                    printf("Found NaN with i: %d and j: %d\n", i,j);
+                    exit(1);
                     return;
                 }
             }
         }
     }
-    printf("NaN not found!\n");
 }
 
 void write_to_file_mesh(char * f_name, double **X, double **
@@ -194,7 +194,7 @@ int n, int m) {
     int i,j;
     for ( i = 0; i < n; i++) {
         for (j = 0; j < m; j++) {
-            volume[i][j] = square_volume(X[i][j],X[i][j + 1],Y[i][j],Y[i + 1][j]);         
+            volume[i][j] = square_volume(X[i+1][j],X[i][j],Y[i][j],Y[i][j+1]);         
         }
     }
 }
@@ -254,19 +254,22 @@ void jacobi_method_naive(int max_iter, int nx, int ny, double epsilon, double **
     double sum;
     double aii_r;
     double ** x_prev;
-    x_prev = malloc_2d(nx + 1, ny + 1);
+    x_prev = malloc_2d(nx, ny);
     double **tmp;
     for (i = 0; i < nx; i++){
         for (j = 0; j < ny; j++) {
             x_prev[i][j] = x[i][j];
         }
     }
-  //  print_2d(nx, ny, x_prev);
     for (iter = 0; iter < max_iter; iter++) {
         // n^2 is i to j...
-        for (i = 1; i < nx; i++) {
+        // tmp = x_prev;
+        // x_prev = x;
+        // x = tmp;
+        
+        for (i = 1; i < nx - 1; i++) {
             sum = 0.0;
-            for (j = 1; j < ny; j++) {
+            for (j = 1; j < ny - 1; j++) {
                 //for (k = 0; k < 10; k++) {
                 //let's write it explicitly Maybe should be A[i][j]
                 sum += A[i][j][0] * x_prev[i + 1][j - 1]; // A[i][j][0] is left bottom.
@@ -278,19 +281,29 @@ void jacobi_method_naive(int max_iter, int nx, int ny, double epsilon, double **
                 sum += A[i][j][7] * x_prev[i - 1][j];     // A[i][j][7] is top.
                 sum += A[i][j][8] * x_prev[i - 1][j + 1]; // A[i][j][8] is top right.
                 aii_r = 1.0 / A[i - 1][j - 1][4];
-    //            printf("%10e\n", A[i - 1][j - 1][1]);
                 x[i][j] = aii_r * (b[i - 1][j - 1] - sum);
+                // printf("%10e\n", sum);
             }
         }
-        if (converge(nx, ny, epsilon, x_prev, x)) {
-            free_2d(x_prev, nx);
-            return;
+        // printf("second iter\n");
+#pragma omp parallel for collapse(2)
+        for (i = 0; i < nx; i++){
+           for (j = 0; j < ny; j++) {
+                x_prev[i][j] = x[i][j];
+            }
         }
-        tmp = x_prev;
-        x_prev = x;
-        x = tmp;
+
+        // if (converge(nx, ny, epsilon, x_prev, x)) {
+        //     printf("hello %d\n", iter);
+        //     free_2d(x_prev, nx);
+        //     printf("hello\n");
+
+        //     return;
+        // }
     }
-    free_2d(x_prev, nx);
+            printf("DONE iter\n");
+    // print_2d(x, nx,ny);
+    free_2d(x_prev, nx );
 }
 
 int converge(int nx, int ny, double epsilon, double **x_prev, double** x_current) {

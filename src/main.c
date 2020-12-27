@@ -27,6 +27,7 @@
 
 int main (int argc, char* argv[]) {
     char * str;
+    FILE *fenergy, *ftemp, *fx, *fy;
     Problem *p = malloc(sizeof(struct Problem));
     p->diff_coeff = malloc(sizeof(struct Data));
     p->vol = malloc(sizeof(struct Data));
@@ -51,9 +52,27 @@ int main (int argc, char* argv[]) {
         str = argv;
     }
     init(p, str);
+    fenergy = fopen("data/energy.txt", "w");
+    ftemp = fopen("data/temperature.txt", "w");
+    fx = fopen("data/x.txt", "w");
+    fy = fopen("data/y.txt", "w");
+            diagnostic_energy_1d(p->energy, p->constants->a_rad,p->time->time_passed, 1, fenergy);
+
     do {
-        
+        if (p->time->cycle % 1 == 0) {
+            printf("\n########## Starting time step number: %d ########## \n",p->time->cycle);
+        }
+
         do_timestep(p);
+        // diagnostic_energy_1d(p->energy, p->constants->a_rad,p->time->time_passed, 1, fenergy);
+        // diagnostic_temp_1d(p->temp,p->time->time_passed * p->constants->c_light, 1, ftemp);
+        diagnostic_energy_1d(p->energy, p->constants->a_rad,p->time->time_passed*p->constants->c_light , 1, fenergy);
+        diagnostic_energy_1d(p->temp, p->constants->a_rad,p->time->time_passed*p->constants->c_light , 1, ftemp);
+        if (p->time->cycle % 1 == 0) {
+            printf("\n@@@@@@@@@@ Done time step number: %d @@@@@@@@@@ \n",p->time->cycle);
+        }
+        // if (p->time->cycle == 3) 
+        //     exit(1);
     } while( !update_time(p->time, p->temp) );
     
     clean_prog(p);

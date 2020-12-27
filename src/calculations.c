@@ -11,7 +11,8 @@ void calculate_temperature(Quantity *T, Quantity *E, Constants *consts, Data *op
     int i, j;
     int X = T->nx;
     int Y = T->ny;
-    double arad, c, coeff;
+    double arad, c, coeff, opac_fac;
+    double v;
     double **temp_curr, **temp_prev, **energy, **opacity, **cv;
     temp_curr = T->current;
     temp_prev = T->prev;
@@ -20,13 +21,16 @@ void calculate_temperature(Quantity *T, Quantity *E, Constants *consts, Data *op
     cv = heat_cap->values;
     arad = consts->a_rad;
     c = consts->c_light;
+    opac_fac = consts->sigma_factor;
 
-    for (i = 1; i < X; i++) {
-        for (j = 1; j < Y; j++) {
-            coeff = (opacity[i][j] * 4.0 * pow(temp_prev[i][j], 3) * arad) / (cv[i][j]);
-            temp_curr[i][j] = (temp_prev[i][j] + coeff * c * dt * energy[i][j]) 
+    for (i = 0; i < X; i++) {
+        for (j = 0; j < Y; j++) {
+            coeff = (opac_fac * opacity[i][j] * 4.0 * pow(temp_prev[i][j], 3) * arad) / (cv[i][j]);
+            // printf("opacity %10e\n", opacity[i][j]);
+            v = arad * pow(temp_prev[i][j],4);
+            temp_curr[i][j] = (v + coeff * c * dt * energy[i][j]) 
                                 / (1.0 + dt * c * coeff);
-            temp_curr[i][j] = pow(temp_curr[i][j] / consts->a_rad, 0.25);
+            temp_curr[i][j] = pow(temp_curr[i][j] / arad, 0.25);
         }
     }
     return;
@@ -56,7 +60,8 @@ void calculate_opacity(Data *opacity,Data *rho, Quantity *T, Materials * mats) {
         for (i = i_start; i < i_end; i++) {
             for (j = j_start; j < j_end; j++) {
                 //why did i write lambda + 2
-                opac[i][j] =  pow(density[i][j], lambda + 1.0) / (g * pow(temp[i][j], alpha));
+                opac[i][j] = pow(density[i][j], lambda + 1.0) / (g * pow(temp[i][j], alpha));
+                            // printf("%10e\n", opac[i][j]);
             }
         }
     }

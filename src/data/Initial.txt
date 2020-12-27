@@ -1,6 +1,6 @@
 Time Segment: {
 	Initial time: 0.000000e+00.
-	Starting dt: 1.000000e-11.
+	Starting dt: 3.000000e-13.
 	dt max: 1.000000e-11
 	dt factor: 1.000000e-01.
 	Time finish: 1.500000e-09.
@@ -8,10 +8,10 @@ Time Segment: {
 Materials Segment: {
 	Number of Materials: 1
 	Material number: 0
-		Alpha: 3.530000e+00.
-		Beta: 1.100000e+00.
-		mu: 9.000000e-02.
-		lambda: 7.500000e-01.
-		f: 1.872341e+07.
-		g: 4.257911e-26.
+		Alpha: 0.000000e+00.
+		Beta: 4.000000e+00.
+		mu: 0.000000e+00.
+		lambda: 1.000000e+00.
+		f: 7.560000e-15.
+		g: 1.000000e+00.
 }

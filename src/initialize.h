@@ -6,7 +6,7 @@ double *dt, double *t0, int *cycle, double *time_passed,double *time_stop,
 double ***R,double ***Z, double ***E_current, double ***E_old, double****A, double***volume);*/
 
 void init(Problem*p, char*argv);
-void init_mesh_Kershaw1(int K, int L, double **R, double **Z);
+void init_mesh_Kershaw1(int K, int L, double **R, double **Z, double dx);
 void init_python(Problem*p);
 void init_density(Materials *mats, Data *density);
 void clean_prog(Problem *p);
