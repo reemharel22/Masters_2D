@@ -56,6 +56,7 @@ int main (int argc, char* argv[]) {
     ftemp = fopen("data/temperature.txt", "w");
     fx = fopen("data/x.txt", "w");
     fy = fopen("data/y.txt", "w");
+    diagnostic_position(p->coor->R, p->energy->nx + 1, p->energy->ny + 1, fx);
             diagnostic_energy_1d(p->energy, p->constants->a_rad,p->time->time_passed, 1, fenergy);
 
     do {

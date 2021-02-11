@@ -7,7 +7,6 @@ double ***R,double ***Z, double ***E_current, double ***E_old, double****A, doub
 
 void init(Problem*p, char*argv);
 void init_mesh_Kershaw1(int K, int L, double **R, double **Z, double dx);
-void init_python(Problem*p);
 void init_density(Materials *mats, Data *density);
 void clean_prog(Problem *p);
 void init_datafile(Problem *p, char* f_name);

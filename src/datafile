@@ -1,6 +1,6 @@
 nx 100
 ny 1
-xmax 10
+xmax 3
 source 1.0
 dt_0 3E-13
 dt_max 1E-11
@@ -12,6 +12,7 @@ time_stop 1.5E-9
 sigma_boltzman 5.6704E-5
 c_light 2.99792458E10
 a_rad 7.5657674E-15
+TH 1
 T0 300
 bc_type 1
 num_mats 1

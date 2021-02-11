@@ -12,13 +12,21 @@ void diagnostic_Quantity_2d(Quantity *Q,double t,  char*f_name) {
     int Y = Q->ny;
     int i, j;
    // FILE*fp = fopen(f_name, "w");
-    for (i = 0; i < X; i++) {
-        for (j = 0; j < Y; j++) {
-            // TODO
+    for (i = 1; i < X - 1; i++) {
+        for (j = 1; j < Y - 1; j++) {
+
         }
     }
 }
 
+void diagnostic_position(double ** x, int nx, int ny,  FILE*fp) {
+    int i, j;
+    for (i = 1; i < nx - 1; i++) {
+            fprintf(fp, "%10e ", x[i][1]);
+    }
+        fprintf(fp, "\n");
+
+}
 void diagnostic_Quantity_1d(Quantity *Q, double time, int y, FILE*fp) {
     int X = Q->nx;
     int i;
@@ -34,7 +42,7 @@ void diagnostic_energy_1d(Quantity *Q, double arad, double time, int y, FILE*fp)
     int i;
     fprintf(fp, "%10e ", time);
     for (i = 1; i < X - 1; i++) {
-        fprintf(fp, "%10e ", pow(Q->current[i][y]/arad, 0.25));
+        fprintf(fp, "%10e ", pow(Q->current[i][y]/arad, 0.25)/1160500);
     }
     fprintf(fp, "\n");
 }

@@ -8,10 +8,10 @@ Time Segment: {
 Materials Segment: {
 	Number of Materials: 1
 	Material number: 0
-		Alpha: 0.000000e+00.
-		Beta: 4.000000e+00.
+		Alpha: 3.000000e+00.
+		Beta: 1.000000e+00.
 		mu: 0.000000e+00.
-		lambda: 1.000000e+00.
-		f: 7.560000e-15.
-		g: 1.000000e+00.
+		lambda: -1.000000e+00.
+		f: 4.726411e+04.
+		g: 6.398300e-19.
 }

@@ -4,173 +4,13 @@
 #include "initialize.h"
 //#include "python2.7/Python.h"
 #include "diagnostics.h"
+#define OLSON 1
+#define SUOLSON 2
 //#include "datafile.c"
 /**
  * @file initialize.c
  */
 
-/**
- * @brief initializes the structs.
- */
-void init_python(Problem*p) {
-   /* PyObject *pName, *pModule, *pFunc;
-    char *argv[3] = {"call","input","test"};
-    Datafile *n = 0;
-
-    Py_Initialize();
-    PyRun_SimpleString("import sys");
-    PyRun_SimpleString("sys.path.append(\".\")");
-
-    pName = PyString_FromString(argv[1]);
-    pModule = PyImport_Import(pName);
-    Py_DECREF(pName);
-
-    if (pModule != NULL) {
-        pFunc = PyObject_GetAttrString(pModule, argv[2]);
-        /* pFunc is a new reference */
-    
-      /*  if (pFunc && PyCallable_Check(pFunc)) {
-           /* pArgs = PyTuple_New(argc - 3);
-            for (i = 0; i < argc - 3; ++i) {
-                pValue = PyInt_FromLong(atoi(argv[i + 3]));
-                if (!pValue) {
-                    Py_DECREF(pArgs);
-                    Py_DECREF(pModule);
-                    fprintf(stderr, "Cannot convert argument\n");
-                    return 1;
-                }
-                PyTuple_SetItem(pArgs, i, pValue);
-            }*/
-
-      /*      n =(Datafile*) PyObject_CallObject(pFunc, 0);
-            //pValue = PyObject_CallObject(pFunc, pArgs);
-            //PyArg_ParseTupleAndKeywords(Pva)
-            if (n != NULL) {
-                p->coor.nxp = n->nxp;
-                p->coor.nyp = n->nyp;
-                p->vol.nx =  n->nx;
-                p->vol.ny =  n->ny;
-                p->time.t0 = n->t0;
-                p->time.dt = n->dt;
-                p->time.time_stop = n->time_stop;
-                p->diag.time_print = n->time_diagnostic;
-                p->constants.a_rad = n->a_rad;
-                p->constants.sigma_boltzman = n->sigma_boltzman;
-                p->constants.c_light = n->c;
-                p->constants.T0 = n->T0;
-                p->time.dt_factor = n->dt_factor;
-                p->boundary_type = n->bc_type;
-                p->mats.num_mats = n->num_mats;
-                Datafile_dealloc(n);
-                Py_DECREF(n);
-               // Py_DECREF(pArgs);
-
-            }
-            else {
-                Py_DECREF(pFunc);
-                Py_DECREF(pModule);
-                PyErr_Print();
-                fprintf(stderr,"Call failed\n");
-                exit(1);
-            }
-        }
-        else {
-            if (PyErr_Occurred())
-                PyErr_Print();
-            fprintf(stderr, "Cannot find function \"%s\"\n", argv[2]);
-        }
-        Py_XDECREF(pFunc);
-        Py_DECREF(pModule);
-    }
-    else {
-        PyErr_Print();
-        fprintf(stderr, "Failed to load \"%s\"\n", argv[1]);
-        Py_Finalize();  
-        exit(1);
-    }
-    Py_Finalize();*/
-}
-
-/*
-* @brief Initializes the materials thro python
-*/
-void init_materials_python(Material *m, int mat_number) {
-  /*  PyObject *pName, *pModule, *pFunc;
-    char* argv[3] = {"call", "input", "material1"}; 
-    if (mat_number == 1) {
-        argv[2] = "material2";    
-    }
-    Datafile *n = 0;
-    Py_Initialize();
-    PyRun_SimpleString("import sys");
-    PyRun_SimpleString("sys.path.append(\".\")");
-
-    pName = PyString_FromString(argv[1]);
-    pModule = PyImport_Import(pName);
-    Py_DECREF(pName);
-
-    if (pModule != NULL) {
-        pFunc = PyObject_GetAttrString(pModule, argv[2]);
-        /* pFunc is a new reference */
-    
-      /*  if (pFunc && PyCallable_Check(pFunc)) {
-           /* pArgs = PyTuple_New(argc - 3);
-            for (i = 0; i < argc - 3; ++i) {
-                pValue = PyInt_FromLong(atoi(argv[i + 3]));
-                if (!pValue) {
-                    Py_DECREF(pArgs);
-                    Py_DECREF(pModule);
-                    fprintf(stderr, "Cannot convert argument\n");
-                    return 1;
-                }
-                PyTuple_SetItem(pArgs, i, pValue);
-            }*/
-
-      /*      n = (Datafile*) PyObject_CallObject(pFunc, 0);
-            //pValue = PyObject_CallObject(pFunc, pArgs);
-            //PyArg_ParseTupleAndKeywords(Pva)
-            if (n != NULL) {
-                m->alpha = n->alpha; // !< ALpha, related to kappa rossland
-                m->lambda = n->lambda1; // !< Lambda related to cv
-                m->beta = n->beta; // !< BEta related to rossaland
-                m->mu = n->mu; // !< Mu related to rossland
-                m->g = n->g;  //!< g Related to rossland
-                m->f = n->f; // !< f related to rossland
-                m->i_start = n->i_start;
-                m->i_end = n->i_end;
-                m->j_start = n->j_start;
-                m->j_end = n->j_end;
-                m->init_rho = n->rho;
-                Datafile_dealloc(n);
-                Py_DECREF(n);
-               // Py_DECREF(pArgs);
-
-            }
-            else {
-                Py_DECREF(pFunc);
-                Py_DECREF(pModule);
-                PyErr_Print();
-                fprintf(stderr,"Call failed\n");
-                exit(1);
-            }
-        }
-        else {
-            if (PyErr_Occurred())
-                PyErr_Print();
-            fprintf(stderr, "Cannot find function \"%s\"\n", argv[2]);
-        }
-        Py_XDECREF(pFunc);
-        Py_DECREF(pModule);
-    }
-    else {
-        PyErr_Print();
-        fprintf(stderr, "Failed to load \"%s\"\n", argv[1]);
-        Py_Finalize();  
-        exit(1);
-    }
-    
-    Py_Finalize();*/
-}
 
 /*
 *
@@ -184,7 +24,7 @@ void init_datafile(Problem *p, char* f_name) {
     size_t len = 0;
     ssize_t read;
     double xmax;
-    double ymax;
+    double ymax = 0;
     p->constants->source = 0;
     while ((read = getline(&line, &len, fp)) != -1) {
         // set up the constants of the problem
@@ -221,6 +61,8 @@ void init_datafile(Problem *p, char* f_name) {
             p->constants->sigma_factor = double_reader(line, len);
         } else if(strstr(line, "T0") != NULL) {
             p->constants->T0 = double_reader(line, len);
+        } else if(strstr(line, "TH") != NULL) {
+            p->constants->TH = double_reader(line, len);
         } else if(strstr(line, "bc_type") != NULL) {
             printf("??");
         } else if(strstr(line, "num_mats") != NULL) {
@@ -229,14 +71,17 @@ void init_datafile(Problem *p, char* f_name) {
             p->mats->mat_type = int_reader(line, len);
         } else if(strstr(line, "xmax") != NULL) {
             xmax = int_reader(line, len);
+        }else if(strstr(line, "ymax") != NULL) {
+            ymax = int_reader(line, len);
         } else if (strstr(line, "sig_fac") != NULL) {
-                    printf("A!Q@W#E$RTYG\n");
             p->constants->sigma_factor = double_reader(line, len);
         }
     }
+    p->constants->TH = p->constants->TH * HEV;
     p->coor->nxp = p->vol->nx + 1;
     p->coor->nyp = p->vol->ny + 1;
-    p->constants->dr = xmax / (p->coor->nxp + 2) ;
+    p->constants->dx = xmax / (p->coor->nxp + 2) ;
+    p->constants->dy = ymax / (p->coor->nyp + 2) ;
 
     fclose(fp);
 }
@@ -244,9 +89,12 @@ void init_datafile(Problem *p, char* f_name) {
 void init_materials_datafile(Material *m, int mat_number) {
     FILE *fp;
     char * line = NULL;
-  //  if (mat_number == 1) {
-        fp = fopen("Su_olson", "r");//SILICON DIOXIDE
-   // }
+   if (mat_number == SUOLSON) {
+        fp = fopen("Su_olson", "r");
+   }
+   else if (mat_number == OLSON) {
+       fp = fopen("olson", "r");
+   }
     size_t len = 0;
     ssize_t read;
     while ((read = getline(&line, &len, fp)) != -1) {
@@ -277,8 +125,12 @@ void init_materials_datafile(Material *m, int mat_number) {
         }
     }
     //normalize g and f
-    // m->g = m->g / pow(1160500.0, m->alpha);
-    // m->f = m->f / pow(1160500.0, m->beta);
+//f = 5.485E10
+//תנאי שפה ב-hev
+    m->g = m->g / pow(HEV, m->alpha);
+
+    m->f = m->f / pow(HEV, m->beta);
+    
 }
 
 
@@ -302,11 +154,15 @@ void init(Problem *p, char *datafaile) {
         init_materials_datafile(&p->mats->mat[i], p->mats->mat_type);
     }
     if (p->mats->num_mats == 1) {
+        if (VERBOSE) 
+            printf("One Material\n");
         p->mats->mat[0].i_start = 0;
         p->mats->mat[0].j_start = 0;
         p->mats->mat[0].i_end = p->vol->nx + 2; 
         p->mats->mat[0].j_end = p->vol->ny + 2; 
+        
     }
+    
     printf("Done reading Materials\n");
     
     // WE HAVE IMAGINARY CELLS. SO WE NEED TO ADD FOR THE VERTEX QUANT..
@@ -317,7 +173,7 @@ void init(Problem *p, char *datafaile) {
     // VOLUME NEEDS TO BE LAST!!!!!!!!!!!
     nx = p->diff_coeff->nx = p->energy->nx = p->temp->nx = p->rho->nx = p->heat_cap->nx = p->opacity->nx = p->vol->nx += 2;
     ny = p->diff_coeff->ny = p->energy->ny = p->temp->ny = p->rho->ny = p->heat_cap->ny = p->opacity->ny = p->vol->ny += 2;
-
+    printf("%d %d\n",nx,ny);
     p->constants->a_rad = 4.0 * p->constants->sigma_boltzman / p->constants->c_light;
     //malloc
     p->coor->R = malloc_2d(nxp, nyp);
@@ -339,10 +195,10 @@ void init(Problem *p, char *datafaile) {
     p->time->cycle = 0;
     p->time->time_passed = p->time->t0;
     //init
-    init_mesh_Kershaw1(p->coor->nxp, p->coor->nyp,p->coor->R, p->coor->Z, p->constants->dr);
+    init_mesh_Kershaw1(p->coor->nxp, p->coor->nyp,p->coor->R, p->coor->Z, p->constants->dx);
     for ( i = 0 ; i < nx; i++) {
         for (j = 0 ; j < ny; j++) {
-            p->energy->prev[i][j] = p->energy->current[i][j] = p->temp->prev[i][j] = p->temp->current[i][j] = 1E-20;//pow(p->constants->T0, 4) * p->constants->a_rad;
+            p->energy->prev[i][j] = p->energy->current[i][j] = p->temp->prev[i][j] = p->temp->current[i][j] = 10E-5 * HEV;//pow(p->constants->T0, 4) * p->constants->a_rad;
         }
     }
     mesh_square_volume(p->vol->values, p->coor->R,p->coor->Z, nx, ny);
@@ -366,7 +222,7 @@ void init_mesh_Kershaw1(int nxp, int nyp, double **R, double **Z, double dr) {
     
     for ( i = 0 ; i < nxp; i++) {
         for (j = 0 ; j < nyp; j++) {
-            Z[i][j] = j * dz;
+            Z[i][j] = j*1e-10;
         }
     }
 }

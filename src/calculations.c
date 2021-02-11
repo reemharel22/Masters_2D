@@ -59,9 +59,7 @@ void calculate_opacity(Data *opacity,Data *rho, Quantity *T, Materials * mats) {
         j_end = mats->mat[k].j_end;
         for (i = i_start; i < i_end; i++) {
             for (j = j_start; j < j_end; j++) {
-                //why did i write lambda + 2
                 opac[i][j] = pow(density[i][j], lambda + 1.0) / (g * pow(temp[i][j], alpha));
-                            // printf("%10e\n", opac[i][j]);
             }
         }
     }

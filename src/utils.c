@@ -8,6 +8,10 @@
 #include <omp.h>
 #include "utils.h"
 
+extern const int VERBOSE = 1;
+extern const double HEV = 1160500;
+
+
 double get_time() {
   return omp_get_wtime();
 }
@@ -96,7 +100,7 @@ void check_nan_3d(double ***arr, int nx, int ny, int nz) {
         for (j = 0; j < ny; j++) {
             for (k = 0; k < nz; k++) {
                 if (arr[i][j][k] != arr[i][j][k]) {
-                    printf("Found NaN with i: %d and j: %d\n", i,j);
+                    printf("Found NaN 3d with i: %d and j: %d\n", i,j);
                     exit(1);
                     return;
                 }
@@ -138,6 +142,15 @@ void print_matrix_col(int nx, int ny, double**val) {
     }
     
 } 
+
+void print(double arr) {
+    printf("%10e\n", arr);
+
+}
+
+void print3(double **arr, int i, int j){
+    printf("%10e\t %d \t %d\n",arr[i][j],i,j);
+}
 
 
 void print_2d(double **arr, int nx, int ny) {
@@ -254,6 +267,7 @@ void jacobi_method_naive(int max_iter, int nx, int ny, double epsilon, double **
     double sum;
     double aii_r;
     double ** x_prev;
+    int im,jm;
     x_prev = malloc_2d(nx, ny);
     double **tmp;
     for (i = 0; i < nx; i++){
@@ -261,65 +275,123 @@ void jacobi_method_naive(int max_iter, int nx, int ny, double epsilon, double **
             x_prev[i][j] = x[i][j];
         }
     }
+    // 6 7 8
+    // 3 4 5
+    // 0 1 2    9 is the solution.. i guess
     for (iter = 0; iter < max_iter; iter++) {
-        // n^2 is i to j...
-        // tmp = x_prev;
-        // x_prev = x;
-        // x = tmp;
-        
         for (i = 1; i < nx - 1; i++) {
-            sum = 0.0;
             for (j = 1; j < ny - 1; j++) {
-                //for (k = 0; k < 10; k++) {
+                sum = 0.0;
+                im = maximum(i - 1, 0);
+                jm = maximum(j - 1, 0);
                 //let's write it explicitly Maybe should be A[i][j]
-                sum += A[i][j][0] * x_prev[i + 1][j - 1]; // A[i][j][0] is left bottom.
+                sum += A[i][j][0] * x_prev[i + 1][jm]; // A[i][j][0] is left bottom.
                 sum += A[i][j][1] * x_prev[i + 1][j];     // A[i][j][1] is bottom.
                 sum += A[i][j][2] * x_prev[i + 1][j + 1]; // A[i][j][2] is right bottom.
-                sum += A[i][j][3] * x_prev[i][j - 1];     // A[i][j][3] is left.
+                sum += A[i][j][3] * x_prev[i][jm];     // A[i][j][3] is left.
                 sum += A[i][j][5] * x_prev[i][j + 1];     // A[i][j][5] is right.
-                sum += A[i][j][6] * x_prev[i - 1][j - 1]; // A[i][j][6] is left top.
-                sum += A[i][j][7] * x_prev[i - 1][j];     // A[i][j][7] is top.
-                sum += A[i][j][8] * x_prev[i - 1][j + 1]; // A[i][j][8] is top right.
-                aii_r = 1.0 / A[i - 1][j - 1][4];
-                x[i][j] = aii_r * (b[i - 1][j - 1] - sum);
-                // printf("%10e\n", sum);
+                sum += A[i][j][6] * x_prev[im][jm]; // A[i][j][6] is left top.
+                sum += A[i][j][7] * x_prev[im][j];     // A[i][j][7] is top.
+                sum += A[i][j][8] * x_prev[im][j + 1]; // A[i][j][8] is top right.
+                aii_r = 1.0 / A[i][j][4];
+                x[i][j] = aii_r * (b[i][j] - sum);
             }
         }
-        // printf("second iter\n");
-#pragma omp parallel for collapse(2)
-        for (i = 0; i < nx; i++){
-           for (j = 0; j < ny; j++) {
-                x_prev[i][j] = x[i][j];
+        if (converge(nx, ny, epsilon, x_prev, x)) {
+            #pragma omp parallel for collapse(2)
+            for (i = 1; i < nx - 1; i++){
+                for (j = 1; j < ny - 1; j++) {
+                    x_prev[i][j] = x[i][j];
+                }
+            }
+             free_2d(x_prev, nx);
+             printf("Converged after %d\n", iter);
+             return;
+         }
+        #pragma omp parallel for collapse(2)
+            for (i = 1; i < nx-1; i++){
+            for (j = 1; j < ny-1; j++) {
+                    x_prev[i][j] = x[i][j];
+                }
             }
         }
-
-        // if (converge(nx, ny, epsilon, x_prev, x)) {
-        //     printf("hello %d\n", iter);
-        //     free_2d(x_prev, nx);
-        //     printf("hello\n");
-
-        //     return;
-        // }
-    }
-            printf("DONE iter\n");
-    // print_2d(x, nx,ny);
     free_2d(x_prev, nx );
+}
+
+void check_boundary_condition(double x, double bc_value) {
+    int i, j;
+    
+    if (abs(x - bc_value) / abs(x + bc_value) > 0.01) 
+    {
+        printf("Boundary condition doesn't apply. \nValue: %10e whereas BC is :%10e\n", x, bc_value);
+        // exit(1);
+    }
+    printf("Boundary condition works!\n");
+}
+
+void mat_mul(double ***A, double ** x, double **b, double epsilon, int nx, int ny) {
+    int i, j, k = 0;
+    double sum;
+    // solves the Ax=b equation where x is the solution from the jacobi method... obviously :)
+    double **vec = malloc_2d(nx, ny);
+    for (i = 1 ; i < nx - 1; i++ ) {
+        for (j = 1; j < ny - 1; j ++) {
+            sum = 0.0;
+            sum += A[i][j][0] * x[i + 1][j - 1]; // A[i][j][0] is left bottom.
+            sum += A[i][j][1] * x[i + 1][j];     // A[i][j][1] is bottom.
+            sum += A[i][j][2] * x[i + 1][j + 1]; // A[i][j][2] is right bottom.
+            sum += A[i][j][3] * x[i][j - 1];     // A[i][j][3] is left.
+            sum += A[i][j][5] * x[i][j + 1];     // A[i][j][5] is right.
+            sum += A[i][j][6] * x[i - 1][j - 1]; // A[i][j][6] is left top.
+            sum += A[i][j][7] * x[i - 1][j];     // A[i][j][7] is top.
+            sum += A[i][j][8] * x[i - 1][j + 1]; // A[i][j][8] is top right.
+            sum += A[i][j][4] * x[i][j];
+            vec[i][j] = sum;
+        }
+    }
+    if (converge(nx,ny,epsilon, vec, b)) {
+        printf("Ax=b worked!\n");
+    }
+    else{
+        print_2d(vec, nx, ny);
+        printf("\n\n");
+        print_2d(b, nx, ny);
+        printf("didnt solve correctly\n");
+        exit(1);
+    }
+}
+
+void check_monotoic_up(double **x, int nx, int ny) {
+    int i,j;
+    for (i = 1; i < nx - 1; i++){
+        for (j = 1; j < ny - 1; j++) {
+            if ((1.001*x[i][j] ) < x[i + 1][j]) {
+                printf("Not monotic ole %d %d\n", i, j);
+                print(x[i][j]);
+                print(x[i+1][j]);
+                exit(1);
+            }
+        }
+    }
 }
 
 int converge(int nx, int ny, double epsilon, double **x_prev, double** x_current) {
     int i, j;
-    double diff,sqdiff = 0.0;
-    for (i = 0; i < nx; i++) {
-        for (j = 0; j < ny; j++) {
-            diff = x_prev[i][j] - x_current[i][j];
-            sqdiff += diff * diff;
+    double diff, sqdiff = 0.0;
+    for (i = 1; i < nx - 1; i++) {
+        for (j = 1; j < ny - 1; j++) {
+            diff = (1 - x_current[i][j] / x_prev[i][j]);
+            // sqdiff = diff * diff;
+            // printf ("diff ");
+            // print(fabs(diff));
+            // print(epsilon);
+            // printf("%10e %10e %10e %10e \n", x_prev[i][j], x_current[i][j], diff, epsilon);
+            if (fabs(diff) > epsilon) {
+                return 0;
+            }
         }
     }
-    if (sqdiff > epsilon) {
-        return 0;
-    } else {
-        return 1;
-    }
+    return 1;
 }
 
 double minimum(double a, double b) {

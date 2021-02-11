@@ -1,5 +1,7 @@
 #ifndef utils_H_
 #define utils_H_
+extern const int VERBOSE;
+extern const double HEV;
 
 double get_time();
 double avg(double x, double y);
@@ -14,6 +16,8 @@ void print_matrix_col(int K, int L, double**val) ;
 void free_2d(double **ptr, int n);
 void free_3d(double ***ptr, int n,int m);
 void print_2d(double **arr, int K, int L);
+void print(double arr);
+void print3(double **arr, int i, int j);
 void print_3d(double ***arr, int K, int L, int Q);
 void free_1d(double *ptr);
 double minimum(double, double);
@@ -22,6 +26,9 @@ double square_volume(double x1, double x2, double y1, double y2);
 void mesh_square_volume(double **volume, double **X, double **Y, int n, int m);
 int converge(int K, int L, double epsilon, double **x_prev, double** x_current);
 void jacobi_method_naive(int max_iter, int K, int L , double epsilon, double ***A, double **x, double **b);
+void mat_mul(double ***A, double ** x, double **b, double epsilon, int nx, int ny);
+void check_boundary_condition(double x_prev, double bc_value);
+void check_monotoic_up(double **x, int nx, int ny);
 void gauss_seidel_method(int max_iter, int K, int L, double epsilon, double ***A, double **x, double **b);
 int int_reader(char *str, int len);
 int* int_array_reader(char *str, int len);

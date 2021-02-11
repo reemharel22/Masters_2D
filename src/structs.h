@@ -62,9 +62,10 @@ typedef struct Constants {
     double sigma_boltzman; //!< Sigma boltzmann
     double sigma_factor;
     double source;
-    double dr;
-    double dz;
+    double dx;
+    double dy;
     double T0;//!< Initial temperature.
+    double TH; // for boundary condition
 } Constants;
 
 /**

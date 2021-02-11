@@ -4,7 +4,7 @@
 
 void do_timestep(Problem *p);
 int update_time(Time *t, Quantity *T);
-void apply_boundary(double **data,int, int n, int m);
+
 /**
  * @brief Builds the matrix A by Kershaw scheme.
  * @var Coordinate::coor  the coordinates struct.
@@ -18,7 +18,8 @@ void apply_boundary(double **data,int, int n, int m);
  *           4. Calculates small sigma and small lambda.
  *           5. Calculates the matrix A by 17a-17f.
  */
-double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt);
+double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt, Constants* constants, Quantity * eng);
 double **build_b_vector(Quantity *E, Quantity *T, Data *opac,double**x, Constants *consts, double dt, int cyc);
 void update_prev_values(Problem * p);
+
 #endif
