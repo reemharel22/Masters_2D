@@ -35,7 +35,10 @@ typedef struct Coordinate {
     int nyp;  //!< Number of values in the L (Y) direction. INCLUDES THE IMAGINARY CELLS.
     double **R;//!< R axis values data.
     double **Z;//!< Z axis values data.
+    double **X;//!< R axis values data.
+    double **Y;//!< Z axis values data.
 } Coordinate;
+
 
 /***
  * @brief The Time struct, contains dt, t0 time passed, time to stop and number of cycle.

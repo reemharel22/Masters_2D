@@ -2,7 +2,6 @@
 #define utils_H_
 extern const int VERBOSE;
 extern const double HEV;
-
 double get_time();
 double avg(double x, double y);
 double avg_harmonic(double, double);

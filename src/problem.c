@@ -68,17 +68,19 @@ void do_timestep(Problem *p) {
     double ***A, **b;
     int i,j;
     int nx,ny;
-
+    double *L, *U, *mainD, *solve;
     nx = p->temp->nx;
     ny = p->temp->ny;
     update_prev_values(p);
 
     //BC FOR OLSON
-    for (j = 0; j < ny; j++){
-        p->energy->prev[0][j] = pow(p->constants->TH,4) * p->constants->a_rad;
-        p->temp->prev[0][j] = pow(p->constants->TH,4) * p->constants->a_rad;
-    }
-
+    // for (j = 0; j < ny; j++){
+    //     p->energy->prev[0][j] = pow(p->constants->TH, 4) * p->constants->a_rad;
+    //     p->energy->current[0][j] = pow(p->constants->TH, 4) * p->constants->a_rad;
+    //     p->temp->prev[0][j]   = p->constants->TH; //pow(p->constants->TH,4);// * p->constants->a_rad;
+    //     p->temp->current[0][j]   = p->constants->TH; //pow(p->constants->TH,4);// * p->constants->a_rad;
+    // }
+    // printf("")
     if (VERBOSE)
         printf("Calculating Opacity\n");
     calculate_opacity(p->opacity, p->rho, p->temp, p->mats); //with prev
@@ -96,27 +98,58 @@ void do_timestep(Problem *p) {
         printf("Building A and b matrix\n");
     //Calculating the energy.
 
-    A = build_matrix_A(p->coor, p->vol, p->diff_coeff, p->time->dt, p->constants, p->energy);
+    A = build_matrix_A(p->coor, p->vol, p->diff_coeff,p->opacity, p->time, p->constants, p->energy);
     // print_3d(A, p->temp->nx, p->temp->ny, 10);
-    b = build_b_vector(p->energy, p->temp, p->opacity,p->coor->R, p->constants, p->time->dt, p->time->cycle);
+    b = build_b_vector(p->energy, p->temp, p->opacity,p->coor->R,p->vol, p->constants, p->time->dt, p->time->cycle);
     // print_2d(b,p->energy->nx ,p->energy->ny );
 
     if (VERBOSE)
         printf("Solving the matrix\n");
+
+    // Now we will solve the tridiagonal
+    L = malloc_1d(ny);
+    mainD = malloc_1d(ny);
+    U = malloc_1d(ny);
+    solve = malloc_1d(ny);
+    // printf("A\n");
+
+    // for (size_t i = 0; i < ny - 1; i++)
+    // {
+    //     L[i]     = A[1][i][5]; 
+    //     U[i]     = A[1][i][1];
+    //     mainD[i] = A[1][i][3];
+    //     solve[i] = b[1][i]; 
+
+    // }
+    // read_file("/home/reemh/leeor_olson/fort.80", mainD, ny);
+    // printf("AAA\n");
+    // read_file("/home/reemh/leeor_olson/fort.81", L, ny);
+    // read_file("/home/reemh/leeor_olson/fort.82", U, ny);
+    // read_file("/home/reemh/leeor_olson/fort.83", solve, ny);
+    // // mat_mul(A, p->energy->current, b, 0.001, p->energy->nx, p->energy->ny);
+    // for (size_t i = 0; i < ny-1; i++)
+    // {
+    //     // print(U[i]);
+    // }
+    
+    // solveTriagonal(ny - 1, solve, L, U, mainD);
+    // // print(solve[0]);
+    // for (size_t j = 1; j < ny; j++)
+    // {
+        
+    //     p->energy->current[1][j] = solve[j];
+    // }
+    
     jacobi_method_naive(1000, p->energy->nx, p->energy->ny, 0.0001, A, p->energy->current, b);
 
-    mat_mul(A, p->energy->current, b, 0.001, p->energy->nx, p->energy->ny);
 
     free_3d(A,p->energy->nx + 1, p->energy->ny + 1);
     check_nan_2d(p->energy->current, p->energy->nx ,p->energy->ny, "energy");
+    // print(p->energy->current[1][1]);
     if (VERBOSE)
         printf("Calculating Temperature\n");
     calculate_temperature(p->temp, p->energy, p->constants, p->opacity, p->heat_cap, p->time->dt);
-        for (j = 0; j < ny-1; j++){
-    // print_2d(p->energy->current, p->energy->nx ,p->energy->ny);
 
-        // check_boundary_condition(p->energy->current[1][j], pow(p->constants->TH, 4) * p->constants->a_rad);
-    }
     if (VERBOSE)
         printf("Updating the current prev values\n");
     check_nan_2d(p->temp->current, p->energy->nx ,p->energy->ny, "temperature");
@@ -127,6 +160,7 @@ void do_timestep(Problem *p) {
     check_nan_2d(p->energy->current, p->energy->nx ,p->energy->ny, "energy");
     check_monotoic_up(p->energy->current, p->energy->nx ,p->energy->ny);
     check_monotoic_up(p->temp->current, p->energy->nx ,p->energy->ny);
+    // check_bc(p->energy, p->coor,p->diff_coeff, p->constants);
     return;
     
 }
@@ -137,14 +171,14 @@ void do_timestep(Problem *p) {
  * @param vol   the volume struct.
  * @param diff  the diffusion coefficient struct.
  * @param dt    the size of timestep.
- * 1. Calculates RK_KL RL_KL Z_KL Z_LK by equation 15c and 15d.
+ * 1. Calculates XK_KL XL_KL Z_KL Z_LK by equation 15c and 15d.
  * 2. Calculates the big SIGMA and big LAMBDA, although they are named sigma, lambda
  *    they are still big ones. (by equation 15a 15b).
  * 3. Calculates Rho[1~4] by equation 17e
  * 4. Calculates small sigma and small lambda.
  * 5. Calculates the matrix A by 17a-17f.
  */
-double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt, Constants* constants, Quantity * eng) {
+double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, Data*opac, Time*time , Constants* constants, Quantity * eng) {
     int i = 0,j = 0, k;
     int i1,i0,j1,j0;
     int nxp = coor->nxp;
@@ -154,16 +188,22 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt, Cons
     double **volume = vol->values;
     double **R = coor->R;
     double **Z = coor->Z;
+    double **X = coor->X;
+    double **Y = coor->Y;
+    FILE* fp_sigma;
+    FILE* fp_lambda;
     double **D = diff->values;
+    double dt = time->dt;
     double **energy = eng->prev;
     double c_light = constants->c_light;
     double TH = constants->TH;
     double xl1, xl0;
+    double **opacity = opac->values;
     double sigma_boltz = constants->sigma_boltzman;
-    double **RK_KL = malloc_2d(nxp, nyp);
-    double **RL_KL = malloc_2d(nxp, nyp);
-    double **ZK_KL = malloc_2d(nxp, nyp);
-    double **ZL_KL = malloc_2d(nxp, nyp);
+    double **XK_KL = malloc_2d(nxp, nyp);
+    double **XL_KL = malloc_2d(nxp, nyp);
+    double **YK_KL = malloc_2d(nxp, nyp);
+    double **YL_KL = malloc_2d(nxp, nyp);
     
     double **rho1 = malloc_2d(nx, ny);
     double **rho2 = malloc_2d(nx, ny);
@@ -181,24 +221,32 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt, Cons
     //#pragma omp parallel for default(shared)
     for(i = 0; i < nxp - 1; i++){
         for (j = 0; j < nyp - 1; j++) {
-            RK_KL[i][j] = (R[i + 1][j + 1] - R[i][j] + R[i + 1][j] - R[i][j + 1]) / 2.0;
-            RL_KL[i][j] = (R[i + 1][j + 1] - R[i][j] - R[i + 1][j] + R[i][j + 1]) / 2.0;
+            XK_KL[i][j] = (X[i + 1][j + 1] - X[i][j] + X[i + 1][j] - X[i][j + 1]) / 2.0;
+            XL_KL[i][j] = (X[i + 1][j + 1] - X[i][j] - X[i + 1][j] + X[i][j + 1]) / 2.0;
 
-            ZK_KL[i][j] = (Z[i + 1][j + 1] - Z[i][j] + Z[i + 1][j] - Z[i][j + 1]) / 2.0;
-            ZL_KL[i][j] = (Z[i + 1][j + 1] - Z[i][j] - Z[i + 1][j] + Z[i][j + 1]) / 2.0;
-            // printf("hey %10e\t%10e\t%10e\t%10e\n",RK_KL[i][j],RL_KL[i][j],ZK_KL[i][j],ZL_KL[i][j]);
+            YK_KL[i][j] = (Y[i + 1][j + 1] - Y[i][j] + Y[i + 1][j] - Y[i][j + 1]) / 2.0;
+            YL_KL[i][j] = (Y[i + 1][j + 1] - Y[i][j] - Y[i + 1][j] + Y[i][j + 1]) / 2.0;
             //calclulate jacobian..
-            jacobi[i][j] = RK_KL[i][j] * ZL_KL[i][j] - RL_KL[i][j] * ZK_KL[i][j];
-
+            jacobi[i][j] = XK_KL[i][j] * YL_KL[i][j] - XL_KL[i][j] * YK_KL[i][j];
         }
     }
 
+    
+    // print_2d(jacobi, nx, ny);
+    fp_lambda = fopen("data/jacobi.txt", "a");
+    
+    fprintf(fp_lambda, "%10e ", time->time_passed);
+    for (j = 0; j < ny; j++) {
+        fprintf(fp_lambda, "%10e ", jacobi[1][j]);
+    }
+    fprintf(fp_lambda, "\n");
+    fclose(fp_lambda);
     // these sizes are cell quantities, therefore we go KC, LC
     // we do not go throught the last imaginary cells, ofc.
     // #pragma omp parallel for default(shared)
-    print_2d(D, nx, ny);
-    for(i = 0; i < nx - 1; i++){
-        for (j = 0; j < ny - 1; j++) {
+    // print_2d(D, nx, ny);
+    for(i = 0; i < nx -1; i++){
+        for (j = 0; j < ny-1 ; j++) {
             //the reason we take jacob(i,j) is because we already made sigma(i,j)
             // be the same index as jacob(i,j), only R is shifted. see (15)
             // B_sigma[i][j] = (R[i + 1][j + 1] + R[i + 1][j]) 
@@ -207,33 +255,41 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt, Cons
             // B_lambda[i][j] = (R[i + 1][j + 1] + R[i][j + 1]) 
             // / ( D[i][j] * jacobi[i][j] + D[i][j + 1] * jacobi[i][j + 1]);
             B_sigma[i][j] = (R[i + 1][j + 1] + R[i + 1][j]) 
-                            / (jacobi[i][j]/D[i][j] + jacobi[i + 1][j] / D[i + 1][j]);
-
+                            / (jacobi[i][j] + jacobi[i + 1][j]) * D[i][j];
+            // printf("sigma: %d %d %10e %10e %10e %10e\n", i,j, B_sigma[i][j], jacobi[i][j], jacobi[i + 1][j], D[i][j]);
             B_lambda[i][j] = (R[i + 1][j + 1] + R[i][j + 1]) 
-                            / (jacobi[i][j]/D[i][j] + jacobi[i][j + 1]/D[i][j + 1]);
+                            / (jacobi[i][j] + jacobi[i][j + 1]) * D[i][j];
         }
     }
+
     // exit(1);
     // BOUNDARY CONDITIONS
     // TOP WALL
     for (i = 0; i < nx; i++) {
-        // data[i][m-1] = 0
-        // B_sigma[i][ny-1] = 0;
         B_lambda[i][ny - 2] = 0;
     }
 
-    // Bottom WALL - reflective
+    // Bottom WALL 
     // i and j = 0
+    j = 0;
     for (i = 0; i < nx; i++) {
-        // data[i][0]     = data[i][1]; //no need
-        B_sigma[i][0] = 0;
-        B_lambda[i][0] = 0;
+        B_sigma[i][j] = 0;
+        B_lambda[i][j] = 0;
+        j1 = j + 1;
+        j0 = j;
+        xl0 = 0.5 * sqrt( pow(X[i][j0 + 1] - X[i][j0],2) + pow(Y[i][j0 + 1] - Y[i][j0],2) );
+        xl1 = 0.5 * sqrt( pow(X[i][j1 + 1] - X[i][j1],2) + pow(Y[i][j1 + 1] - Y[i][j1],2) );
+        if (nx == 3) {
+        B_lambda[i][j] = (R[i + 1][j + 1] + R[i][j + 1]) 
+                    / (jacobi[i][j] + jacobi[i][j + 1]) 
+                    * 2.0 * (sigma_boltz * pow(TH, 4) - c_light * energy[i][j+1] / 4.0) / (energy[i][j] - energy[i][j+1] ) * (xl1 + xl0);
+        }
     }
 
     //RIGHT WALL - leapes
     for (j = 0; j < ny; j++) {
         // data[n - 1][j] = 0; nothing in our case
-        B_sigma[nx-2][j] = 0;
+        // B_sigma[nx-2][j] = 0;
     }
     
     //LEFT WALL - 190 ev DO DO DO
@@ -242,20 +298,20 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt, Cons
         // something with TH here and finc
         i1 = i + 1;
         i0 = i;
-        xl0 = 0.5 * sqrt( pow(R[i0 + 1][j] - R[i0][j],2) + pow(Z[i0 + 1][j] - Z[i0][j],2) );
-        xl1 = 0.5 * sqrt( pow(R[i1 + 1][j] - R[i1][j],2) + pow(Z[i1 + 1][j] - Z[i1][j],2) );
-        B_sigma[i][j] = (R[i + 1][j + 1] + R[i + 1][j]) 
+        xl0 = 0.5 * sqrt( pow(X[i0 + 1][j] - X[i0][j],2) + pow(Y[i0 + 1][j] - Y[i0][j],2) );
+        xl1 = 0.5 * sqrt( pow(X[i1 + 1][j] - X[i1][j],2) + pow(Y[i1 + 1][j] - Y[i1][j],2) );
+        B_sigma[i][j] = 0;
+        // B_lambda[i][j] = 0;
+        if (ny == 3) {
+            B_sigma[i][j] = (R[i + 1][j + 1] + R[i + 1][j]) 
                             / (jacobi[i][j] + jacobi[i + 1][j]) 
-                            * 2.0 * (sigma_boltz * pow(TH, 4) - c_light * energy[i][j] / 4.0) / (energy[i+1][j] - energy[i][j] + 1E-30) * (xl1 + xl0);
+                            * 2.0 * (sigma_boltz * pow(TH, 4) - c_light * energy[i+1][j] / 4.0) / (energy[i][j] - energy[i+1][j]) * (xl1 + xl0);
+        }
+        // B_sigma[i][j] = 122432.11547629160*122432.11547629160;
+        // printf("B_SIGMA i: %d j: %d value:%10e\n",i,j,B_sigma[i][j]);
         // xl1 = 0.5*sqrt( pow(R[i][j1+1] - R[i][j1], 2) + pow(Z[i][j1+1]-Z[i][j1] , 2));
         // xl0 = 0.5*sqrt( pow(R[i][j0+1] - R[i][j0], 2) + pow(Z[i][j0+1]-Z[i][j0] , 2));
-        // B_lambda[i][j] = (R[i + 1][j + 1] + R[i][j + 1]) 
-        //             / (jacobi[i][j] + jacobi[i][j + 1]) 
-        //             * 2.0 * (sigma_boltz * pow(TH, 4) - c_light * energy[i][j] / 4.0) / (energy[i][j+1] - energy[i][j] + 1E-30) * (xl1 + xl0);
-                    
     }
-            
-    // print_2d(B_lambda, nx, ny);
     // printf("\n\n");
     // print_2d(B_sigma, nx, ny);
     //maybe merge with the next loop for speed..
@@ -272,7 +328,7 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt, Cons
             sqrt_sigma_i1j  = sqrt( maximum(B_sigma[im][j], 0 ) );
             sqrt_lambda_ij  = sqrt( maximum(B_lambda[i][j] , 0) );
             sqrt_lambda_ij1 = sqrt( maximum(B_lambda[i][jm] , 0) );
-            C_KL            = RK_KL[i][j] * RL_KL[i][j] + ZK_KL[i][j] * ZL_KL[i][j];
+            C_KL            = XK_KL[i][j] * XL_KL[i][j] + YK_KL[i][j] * YL_KL[i][j];
             // printf("%10e\n",B_sigma[i][j]);
             rho1[i][j]      = sqrt_sigma_ij  * sqrt_lambda_ij  * C_KL; 
             rho2[i][j]      = sqrt_sigma_i1j * sqrt_lambda_ij1 * C_KL; 
@@ -280,32 +336,60 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt, Cons
             rho4[i][j]      = sqrt_sigma_ij  * sqrt_lambda_ij1 * C_KL;
         }
     }
+
     //calculate the small sigma and small lambda
     double r1,r2,r3,r4;
     double z1,z2,z3,z4;
     for(i = 0; i < nx; i++){
         for (j = 0; j < ny ; j++) {
-            r1 = RL_KL[i][j]     * RL_KL[i][j] ;
-            r2 = RL_KL[i + 1][j] * RL_KL[i+1][j];
-            r3 = RK_KL[i][j]     * RK_KL[i][j];
-            r4 = RK_KL[i][j + 1] * RK_KL[i][j + 1];
-            z1 = ZL_KL[i][j]     * ZL_KL[i][j];
-            z2 = ZL_KL[i + 1][j] * ZL_KL[i + 1][j];
-            z3 = ZK_KL[i][j]     * ZK_KL[i][j];
-            z4 = ZK_KL[i][j + 1] * ZK_KL[i][j + 1];
+            r1 = XL_KL[i][j]     * XL_KL[i][j] ;
+            r2 = XL_KL[i + 1][j] * XL_KL[i+1][j];
+            r3 = XK_KL[i][j]     * XK_KL[i][j];
+            r4 = XK_KL[i][j + 1] * XK_KL[i][j + 1];
+            z1 = YL_KL[i][j]     * YL_KL[i][j];
+            z2 = YL_KL[i + 1][j] * YL_KL[i + 1][j];
+            z3 = YK_KL[i][j]     * YK_KL[i][j];
+            z4 = YK_KL[i][j + 1] * YK_KL[i][j + 1];
 
             S_sigma[i][j]  = B_sigma[i][j]  * ( r1 + z1 + r2 + z2) / 2.0;
             S_lambda[i][j] = B_lambda[i][j] * ( r3 + z3 + r4 + z4) / 2.0;
         }
     }
-  
+        // S_sigma[0][1] = S_sigma[nx-2][1] = 2*S_sigma[nx-3][1] ;
+
+    fp_sigma  = fopen("data/sigma.txt", "a");
+    fp_lambda = fopen("data/lambda.txt", "a");
+
+    fprintf(fp_sigma, "%10e ", time->time_passed);
+    for (i = 0; i < nx - 1; i++) {
+        fprintf(fp_sigma, "%10e ", S_sigma[i][1]);
+    }
+    fprintf(fp_sigma, "\n");
+
+    fprintf(fp_lambda, "%10e ", time->time_passed);
+    for (j = 0; j < ny - 1; j++) {
+        fprintf(fp_lambda, "%10e ", S_lambda[1][j]);
+    }
+    fprintf(fp_lambda, "\n");
+    fclose(fp_lambda);
+    fclose(fp_sigma); 
+//LEEOR:
+// 1 4 7
+// 2 5 8
+// 3 6 9
+
+
+// X X   17e
+// X 17a 17c
+// X 17b 17d
     // the matrix is represnted in the following manner:
     // 6 7 8
     // 3 4 5
     // 0 1 2    
     double vol_1;
-    double a5, a6, a7, a8;
+    double b_17, c_17, d_17, e_17;
     int p = 0;
+    double cdt = c_light * dt;
     k = 0;
     for(i = 0; i < nx - 1; i++){
         //k is equivilent to i - 1. instead of MAX(i,0)...
@@ -313,44 +397,35 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt, Cons
             im = maximum(i - 1, 0);
             jm = maximum(j - 1, 0);
             vol_1 = 1.0 / volume[i][j];
-            A[i][j][4] = 1.0 - dt*vol_1*( -S_sigma[i][j] - S_sigma[im][j] - S_lambda[i][j] - S_lambda[i][jm]
+            A[i][j][4] = (1.0 * volume[i][j] + volume[i][j]*cdt * opacity[i][j]) - dt*( -S_sigma[i][j] - S_sigma[im][j] - S_lambda[i][j] - S_lambda[i][jm]
                          + 0.5* (rho1[i][j] + rho2[i][j] - rho3[i][j] - rho4[i][j]) );
-            a8 = 0.25 * dt * (rho3[i + 1][j] + rho4[i][j + 1]);
-            a7 = dt * (S_lambda[i][j] - 0.25*(rho1[i][j] + rho2[i][j + 1] - rho3[i][j] - rho4[i][j + 1]));  
-            a6 = 0.25 * dt * (rho1[im][j] + rho2[i][j + 1]);
-            a5 = dt * (S_sigma[i][j] - 0.25 * (rho1[i][j] + rho2[i + 1][j] - rho3[i + 1][j] - rho4[i][j]));
-            
-            A[i][j][8]         = -vol_1 * a8; // equation (17d)
-            A[i][j][7]         = -vol_1 * a7; // equation (17c)
-            A[i][j][6]         = -vol_1 * a6; // equation (17e)
-            A[i][j][5]         = -vol_1 * a5; // equation (17b)
 
-            A[i + 1][j + 1][0] = -(1.0/volume[i + 1][j + 1]) * a8;
-            A[i][j + 1][1]     = -(1.0/volume[i][j + 1])     * a7;
-            A[im][j + 1][2]    = -(1.0/volume[im][j + 1])    * a6;
-            A[i + 1][j][3]     = -(1.0/volume[i + 1][j])     * a5;
+            b_17 = S_sigma[i][j]  - 0.25 * (rho1[i][j] + rho2[i + 1][j] - rho3[i + 1][j] - rho4[i][j]);
+            c_17 = S_lambda[i][j] - 0.25 * (rho1[i][j] + rho2[i][j + 1] - rho3[i][j]     - rho4[i][j + 1]);  
+            d_17 = -0.25 * (rho3[i + 1][j] + rho4[i][j + 1]);
+            e_17 =  0.25 * (rho1[im][j] + rho2[i][j + 1]);
+            
+            A[i][j][1]         = -dt  * b_17;// * vol_1; // equation (17b)
+            A[i][j][5]         = -dt  * c_17;// * vol_1; // equation (17c)
+            A[i][j][2]         = -dt  * d_17;// * vol_1; // equation (17d)
+            A[i][j][8]         = -dt  * e_17;// * vol_1; // equation (17e)
+
+            A[i+1][j]  [7] = A[i][j][1]; //* volume[i][j]/volume[i+1][j];
+            A[i]  [j+1][3] = A[i][j][5]; // * volume[i][j]/volume[i]  [j+1];
+            A[i+1][j+1][6] = A[i][j][2]; //* volume[i][j]/volume[i+1][j+1];
+            A[im] [j+1][0] = A[i][j][8]; //* volume[i][j]/volume[im] [j+1];
+
         }
     }
-
-    // for(i = 0; i < nx - 1; i++){
-    //     //k is equivilent to i - 1. instead of MAX(i,0)...
-    //     for (j = 0; j < ny - 1; j++) {
-    //         // A[i][j][4] = 1.0;
-    //         // A[i][j][1] = 0.0;
-    //         // A[i][j][7] = 0.0;
-    //         // A[i][j][0] = 0.0;
-    //         // A[i][j][8] = 0.0;
-    //         // A[i][j][2] = 0.0;
-    //         // A[i][j][6] = 0.0;
-    //         // A[i][j][3] = 0.0;
-    //         // A[i][j][5] = 0.0;
-    //     }
-    // }
-
-    free_2d(RK_KL, nxp);
-    free_2d(RL_KL, nxp);
-    free_2d(ZK_KL, nxp);
-    free_2d(ZL_KL, nxp);
+    for (size_t j = 0; j < ny - 1; j++)
+    {
+        // print(A[1][j][4]);
+    }
+    
+    free_2d(XK_KL, nxp);
+    free_2d(XL_KL, nxp);
+    free_2d(YK_KL, nxp);
+    free_2d(YL_KL, nxp);
 
     free_2d(rho1, nx);
     free_2d(rho2, nx);
@@ -374,7 +449,7 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, double dt, Cons
  * energy - is the prev energy i.e E(r, t = n), current = n + 1 
  * 
 */
-double **build_b_vector(Quantity *E, Quantity *T, Data *opac,double**X, Constants *consts, double dt, int cyc) {
+double **build_b_vector(Quantity *E, Quantity *T, Data *opac,double**X, Data*vol, Constants *consts, double dt, int cyc) {
     int i, j;
     int nx = T->nx;
     int ny = T->ny;
@@ -384,6 +459,7 @@ double **build_b_vector(Quantity *E, Quantity *T, Data *opac,double**X, Constant
     double **energy = E->prev;
     double **temp = T->prev;
     double **opacity =  opac->values;
+    double ** volume = vol->values;
     double src = 0.0;
 
     for (i = 0; i < nx; i++) {
@@ -393,9 +469,12 @@ double **build_b_vector(Quantity *E, Quantity *T, Data *opac,double**X, Constant
             } else {
                 src = 0.0;
             }
-            b[i][j] = energy[i][j] + sigma_factor * opacity[i][j] * dt * c * consts->a_rad * pow(temp[i][j],4) + src * c * dt;
+            b[i][j] = energy[i][j] + sigma_factor * opacity[i][j] * dt * c * consts->a_rad * pow(temp[i][j], 4) + src * c * dt;
+            b[i][j] = b[i][j] * volume[i][j];
         }
     }
+    
+    // print(b[0][1]);
     return b;
 }
 
@@ -410,10 +489,37 @@ void update_prev_values(Problem * p) {
     double **e_prev = p->energy->prev;
     double **e_curr = p->energy->current;
 
-    for (i = 0; i < X; i++) {
-        for (j = 0; j < Y; j++) {
+    for (i = 1; i < X-1; i++) {
+        for (j = 1; j < Y-1; j++) {
             t_prev[i][j] = t_curr[i][j];
             e_prev[i][j] = e_curr[i][j];
+        }
+    }
+}
+
+void check_bc(Quantity*E, Coordinate* coord, Data*diff, Constants *consts) {
+    int i,j;
+    double ** e = E->current;
+    double ** x = coord->X;
+    int nx = E->nx;
+    int ny = E->ny;
+    double f = 0.0;// malloc_2d(nx, ny);   
+    double TH = consts->TH;
+    double sigma_boltz = consts->sigma_boltzman;
+    double c = consts->c_light;
+    double bc_val;
+    double tmp = 0.0;
+    double **D = diff->values;
+
+    bc_val =  consts->sigma_boltzman* pow(TH,4);
+    i = 0;
+    for (j = 0; j < ny; j++) {
+        // e[i+1][j] = 138064.57662909097;
+        f = -D[i][j] * (e[i+1][j] - e[i][j]) / (x[i+1][j] - x[i][j]);
+        tmp = c * e[i][j] / 4.0 + f / 2.0;
+        if (abs(tmp - bc_val) / abs(tmp + bc_val) > 0.01) {
+            printf("BC NOT WORKING!\n");
+            printf("E: %10e\nF: %10e\nMY_BC: %10e\nREAL_BC:%10e\n", e[i][j], f, tmp,bc_val);
         }
     }
 }

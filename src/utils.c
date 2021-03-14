@@ -144,7 +144,7 @@ void print_matrix_col(int nx, int ny, double**val) {
 } 
 
 void print(double arr) {
-    printf("%10e\n", arr);
+    printf("%16e\n", arr);
 
 }
 
@@ -199,7 +199,14 @@ void free_3d(double ***ptr, int n, int m) {
 }
 
 double square_volume(double x1, double x2, double y1, double y2) {
-    return (y2-y1) * (x2-x1);
+    if (x1 == x2) {
+        return y1 - y2;
+    }
+    else if (y1 == y2) {
+        return x1 - x2;
+    } 
+    return (y1-y2) * (x1-x2);
+    // return x1-x2;
 }
 
 void mesh_square_volume(double **volume, double **X, double **Y, 
@@ -207,8 +214,27 @@ int n, int m) {
     int i,j;
     for ( i = 0; i < n; i++) {
         for (j = 0; j < m; j++) {
-            volume[i][j] = square_volume(X[i+1][j],X[i][j],Y[i][j],Y[i][j+1]);         
+            volume[i][j] = square_volume(X[i+1][j],X[i][j],Y[i][j+1],Y[i][j]);  
         }
+    }
+
+}
+
+void solveTriagonal(int N, double * solve, double *L,double *U, double* mainD) {
+    int i;
+    U[0] = U[0] / mainD[0];
+    solve[0] = solve[0] / mainD[0];
+
+    /* loop from 1 to X - 1 inclusive, performing the forward sweep */
+    for (i = 1; i < N; i++) {
+        const double m = 1.0 / (mainD[i] - L[i] * U[i - 1]);
+        U[i] = U[i] * m;
+        solve[i] = (solve[i] - (L[i] * (solve[i - 1]))) * m;
+    }
+
+    /* loop from X - 2 to 0 inclusive (safely testing loop condition for an unsigned integer), to perform the back substitution */
+    for (i = N - 2; i >=0 ; i--) {
+        solve[i] -= U[i] * solve[i + 1];
     }
 }
 
@@ -275,6 +301,7 @@ void jacobi_method_naive(int max_iter, int nx, int ny, double epsilon, double **
             x_prev[i][j] = x[i][j];
         }
     }
+    // print_2d(b,nx,ny);
     // 6 7 8
     // 3 4 5
     // 0 1 2    9 is the solution.. i guess
@@ -298,6 +325,9 @@ void jacobi_method_naive(int max_iter, int nx, int ny, double epsilon, double **
             }
         }
         if (converge(nx, ny, epsilon, x_prev, x)) {
+            // print_2d(x_prev,nx,ny);
+            // printf("\n\n");
+            // print_2d(x,nx, ny);
             #pragma omp parallel for collapse(2)
             for (i = 1; i < nx - 1; i++){
                 for (j = 1; j < ny - 1; j++) {
@@ -361,10 +391,25 @@ void mat_mul(double ***A, double ** x, double **b, double epsilon, int nx, int n
     }
 }
 
+
+void read_file(char * f_name, double * x, int nx) {
+    int i;
+    FILE *fp;
+    fp = fopen(f_name, "r");
+    fscanf(fp, "%lf", &x[0]);
+    
+    for (size_t i = 0; i < nx - 1; i++)
+    {
+        fscanf(fp, "%lf", &x[i]);
+        // print(x[i]);
+    }
+    
+}
+
 void check_monotoic_up(double **x, int nx, int ny) {
     int i,j;
-    for (i = 1; i < nx - 1; i++){
-        for (j = 1; j < ny - 1; j++) {
+    for (i = 2; i < nx - 1; i++){
+        for (j = 2; j < ny - 1; j++) {
             if ((1.001*x[i][j] ) < x[i + 1][j]) {
                 printf("Not monotic ole %d %d\n", i, j);
                 print(x[i][j]);

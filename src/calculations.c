@@ -23,8 +23,8 @@ void calculate_temperature(Quantity *T, Quantity *E, Constants *consts, Data *op
     c = consts->c_light;
     opac_fac = consts->sigma_factor;
 
-    for (i = 0; i < X; i++) {
-        for (j = 0; j < Y; j++) {
+    for (i = 1; i < X-1; i++) {
+        for (j = 1; j < Y-1; j++) {
             coeff = (opac_fac * opacity[i][j] * 4.0 * pow(temp_prev[i][j], 3) * arad) / (cv[i][j]);
             // printf("opacity %10e\n", opacity[i][j]);
             v = arad * pow(temp_prev[i][j],4);
@@ -63,6 +63,11 @@ void calculate_opacity(Data *opacity,Data *rho, Quantity *T, Materials * mats) {
             }
         }
     }
+
+    // printf("\nOPACITY\n");
+    // print_2d(opac, i_end, j_end);
+    // printf("\nTEMPERATURE\n");
+    // print_2d(temp, i_end, j_end);
 }
 
 /**

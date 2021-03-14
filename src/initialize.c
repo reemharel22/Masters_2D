@@ -23,7 +23,7 @@ void init_datafile(Problem *p, char* f_name) {
     int num_type, num_mats;
     size_t len = 0;
     ssize_t read;
-    double xmax;
+    double xmax = 0;
     double ymax = 0;
     p->constants->source = 0;
     while ((read = getline(&line, &len, fp)) != -1) {
@@ -128,7 +128,6 @@ void init_materials_datafile(Material *m, int mat_number) {
 //f = 5.485E10
 //תנאי שפה ב-hev
     m->g = m->g / pow(HEV, m->alpha);
-
     m->f = m->f / pow(HEV, m->beta);
     
 }
@@ -178,6 +177,8 @@ void init(Problem *p, char *datafaile) {
     //malloc
     p->coor->R = malloc_2d(nxp, nyp);
     p->coor->Z = malloc_2d(nxp, nyp);
+    p->coor->X = malloc_2d(nxp, nyp);
+    p->coor->Y = malloc_2d(nxp, nyp);
     
     p->energy->current = malloc_2d(nx, ny);
     p->energy->prev    = malloc_2d(nx, ny);
@@ -195,13 +196,89 @@ void init(Problem *p, char *datafaile) {
     p->time->cycle = 0;
     p->time->time_passed = p->time->t0;
     //init
-    init_mesh_Kershaw1(p->coor->nxp, p->coor->nyp,p->coor->R, p->coor->Z, p->constants->dx);
-    for ( i = 0 ; i < nx; i++) {
-        for (j = 0 ; j < ny; j++) {
-            p->energy->prev[i][j] = p->energy->current[i][j] = p->temp->prev[i][j] = p->temp->current[i][j] = 10E-5 * HEV;//pow(p->constants->T0, 4) * p->constants->a_rad;
+    // init_mesh_Kershaw1(p->coor->nxp, p->coor->nyp,p->coor->X, p->coor->Y, p->constants->dx);
+    
+    // for 1d problem on y-axis
+    if (nx == 3) {
+        for ( i = 0; i < p->coor->nxp; i++) {
+            for ( j = 0; j < p->coor->nyp; j++) {
+                p->coor->X[i][j] = p->coor->R[i][j] = 1;
+                p->coor->Y[i][j] = p->coor->Z[i][j] = j * p->constants->dy;
+            }
+        }
+        for ( i = 0; i < p->coor->nxp; i++) {
+            for ( j = 0; j < p->coor->nyp; j++) {
+                if (i == 0) {
+                    // p->coor->X[i][j] = p->coor->R[i][j] = -1;
+                    p->coor->X[i][j] = -1;
+                }else if(i == 1) {
+                    // p->coor->X[i][j] = p->coor->R[i][j] = 0;
+                    p->coor->X[i][j] = 0;
+                }else if(i == 2) {
+                    p->coor->X[i][j] = 1;
+                    // p->coor->X[i][j] = p->coor->R[i][j]= 1;
+                }else if(i == 3) {
+                    p->coor->X[i][j] = 2;
+                    // p->coor->X[i][j] = p->coor->R[i][j]= 2;
+                }
+            }
         }
     }
-    mesh_square_volume(p->vol->values, p->coor->R,p->coor->Z, nx, ny);
+    //for 1d problem on x-axis
+    if (ny == 3) {
+        for ( i = 0; i < p->coor->nxp; i++) {
+            for ( j = 0; j < p->coor->nyp; j++) {
+                // p->coor->X[i][j] = p->coor->R[i][j] = 1;
+                p->coor->X[i][j] = i * p->constants->dx;
+                p->coor->R[i][j] = 1;
+                p->coor->Z[i][j] = 0;
+                
+            }
+        }
+        
+        for ( i = 0; i < p->coor->nxp; i++) {
+            for ( j = 0; j < p->coor->nyp; j++) {
+                if (j == 0) {
+                    p->coor->Y[i][j] = -1;
+                }else if(j == 1) {
+                    p->coor->Y[i][j] = 0;
+                }else if(j == 2) {
+                    p->coor->Y[i][j] =  1;
+                }else if(j == 3) {
+                    p->coor->Y[i][j] = 2;
+                }
+            }
+        }
+            // init_mesh_Kershaw1(p->coor->nxp, p->coor->nyp,p->coor->X, p->coor->Y, p->constants->dx);
+
+    }
+
+    //BC for X
+    
+    for ( i = 0 ; i < nx; i++) {
+        for (j = 0 ; j < ny; j++) {
+            p->energy->prev[i][j] = p->energy->current[i][j] = pow(65255,4) * p->constants->a_rad;//p->constants->a_rad * pow(62525.5, 4);
+            p->temp->prev[i][j] = p->temp->current[i][j] = 65255;//*//10E-5 * HEV;//pow(p->constants->T0, 4) * p->constants->a_rad;
+        }
+    }
+    if (ny == 3) {
+        for (j = 0; j < ny; j++){
+            p->energy->prev[0][j]    = p->constants->a_rad * pow(p->constants->TH, 4);
+            p->energy->current[0][j] = p->constants->a_rad * pow(p->constants->TH, 4);
+            p->temp->prev[0][j]      = p->constants->TH; //pow(p->constants->TH,4);// * p->constants->a_rad;
+            p->temp->current[0][j]   = p->constants->TH; //pow(p->constants->TH,4);// * p->constants->a_rad;
+        }
+    }
+    if (nx == 3) {
+        for (i = 0; i < nx; i++){
+            p->energy->prev[i][0]    = p->constants->a_rad * pow(p->constants->TH, 4);
+            p->energy->current[i][0] = p->constants->a_rad * pow(p->constants->TH, 4);
+            p->temp->prev[i][0]      = p->constants->TH; //pow(p->constants->TH,4);// * p->constants->a_rad;
+            p->temp->current[i][0]   = p->constants->TH; //pow(p->constants->TH,4);// * p->constants->a_rad;
+        }
+    }
+    
+    mesh_square_volume(p->vol->values, p->coor->X,p->coor->Y, nx, ny);
     init_density(p->mats, p->rho);
     diagnostics_initial(p);
     printf("Done init\n");
@@ -217,14 +294,30 @@ void init_mesh_Kershaw1(int nxp, int nyp, double **R, double **Z, double dr) {
     for ( i = 0; i < nxp; i++) {
         for (j = 0 ; j < nyp; j++) {
             R[i][j] =  i * dr;
+
         }
     }
     
     for ( i = 0 ; i < nxp; i++) {
         for (j = 0 ; j < nyp; j++) {
-            Z[i][j] = j*1e-10;
+            if (j == 0) {
+                Z[i][j] = -1;
+            }else if(j == 1) {
+                Z[i][j] = 0;
+            }else if(j == 2) {
+                Z[i][j] = 1;
+            }else if(j == 3) {
+                Z[i][j] = 2;
+            }
+            
         }
     }
+    
+    // for ( i = 1 ; i < nxp - 1; i++) {
+    //     for (j = 1 ; j < nyp - 1; j++) {
+    //         Z[i][j] = 0;
+    //     }
+    // }
 }
 
 /*
