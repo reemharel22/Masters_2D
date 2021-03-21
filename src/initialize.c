@@ -70,9 +70,9 @@ void init_datafile(Problem *p, char* f_name) {
         } else if(strstr(line, "mat_type") != NULL) {
             p->mats->mat_type = int_reader(line, len);
         } else if(strstr(line, "xmax") != NULL) {
-            xmax = int_reader(line, len);
+            xmax = double_reader(line, len);
         }else if(strstr(line, "ymax") != NULL) {
-            ymax = int_reader(line, len);
+            ymax = double_reader(line, len);
         } else if (strstr(line, "sig_fac") != NULL) {
             p->constants->sigma_factor = double_reader(line, len);
         }
@@ -197,61 +197,62 @@ void init(Problem *p, char *datafaile) {
     p->time->time_passed = p->time->t0;
     //init
     // init_mesh_Kershaw1(p->coor->nxp, p->coor->nyp,p->coor->X, p->coor->Y, p->constants->dx);
-    
+    for ( i = 0; i < p->coor->nxp; i++) {
+        for ( j = 0; j < p->coor->nyp; j++) {
+            p->coor->X[i][j] = p->coor->R[i][j] = (i-1) * p->constants->dx;
+            p->coor->Y[i][j] = p->coor->Z[i][j] = (j-1) * p->constants->dy;
+        }
+    }
+    print(p->constants->dx);
+    print(p->constants->dy);
+    // print_2d(p->coor->X, nxp, nyp);
     // for 1d problem on y-axis
-    if (nx == 3) {
-        for ( i = 0; i < p->coor->nxp; i++) {
-            for ( j = 0; j < p->coor->nyp; j++) {
-                p->coor->X[i][j] = p->coor->R[i][j] = 1;
-                p->coor->Y[i][j] = p->coor->Z[i][j] = j * p->constants->dy;
-            }
-        }
-        for ( i = 0; i < p->coor->nxp; i++) {
-            for ( j = 0; j < p->coor->nyp; j++) {
-                if (i == 0) {
-                    // p->coor->X[i][j] = p->coor->R[i][j] = -1;
-                    p->coor->X[i][j] = -1;
-                }else if(i == 1) {
-                    // p->coor->X[i][j] = p->coor->R[i][j] = 0;
-                    p->coor->X[i][j] = 0;
-                }else if(i == 2) {
-                    p->coor->X[i][j] = 1;
-                    // p->coor->X[i][j] = p->coor->R[i][j]= 1;
-                }else if(i == 3) {
-                    p->coor->X[i][j] = 2;
-                    // p->coor->X[i][j] = p->coor->R[i][j]= 2;
-                }
-            }
-        }
-    }
+    // if (nx == 3) {
+        // for ( i = 0; i < p->coor->nxp; i++) {
+        //     for ( j = 0; j < p->coor->nyp; j++) {
+        //         p->coor->X[i][j] = p->coor->R[i][j] = 1;
+        //         // p->coor->Y[i][j] = p->coor->Z[i][j] = j * p->constants->dy;
+        //     }
+        // }
+        // for ( i = 0; i < p->coor->nxp; i++) {
+        //     for ( j = 0; j < p->coor->nyp; j++) {
+        //         if (i == 0) {
+        //             p->coor->R[i][j] = p->coor->X[i][j] = -1;
+        //         }else if(i == 1) {
+        //             p->coor->R[i][j] = p->coor->X[i][j] = 0;
+        //         }else if(i == 2) {
+        //             p->coor->R[i][j] = p->coor->X[i][j] = 1;
+        //         }else if(i == 3) {
+        //             p->coor->R[i][j] = p->coor->X[i][j] = 2;
+        //         }
+        //     }
+        // }
+    // }
+    
     //for 1d problem on x-axis
-    if (ny == 3) {
-        for ( i = 0; i < p->coor->nxp; i++) {
-            for ( j = 0; j < p->coor->nyp; j++) {
-                // p->coor->X[i][j] = p->coor->R[i][j] = 1;
-                p->coor->X[i][j] = i * p->constants->dx;
-                p->coor->R[i][j] = 1;
-                p->coor->Z[i][j] = 0;
+    // if (ny == 3) {
+    //     for ( i = 0; i < p->coor->nxp; i++) {
+    //         for ( j = 0; j < p->coor->nyp; j++) {
+    //             p->coor->X[i][j] = i * p->constants->dx;
+    //             p->coor->R[i][j] = 1;
+    //             p->coor->Z[i][j] = 0;
                 
-            }
-        }
-        
-        for ( i = 0; i < p->coor->nxp; i++) {
-            for ( j = 0; j < p->coor->nyp; j++) {
-                if (j == 0) {
-                    p->coor->Y[i][j] = -1;
-                }else if(j == 1) {
-                    p->coor->Y[i][j] = 0;
-                }else if(j == 2) {
-                    p->coor->Y[i][j] =  1;
-                }else if(j == 3) {
-                    p->coor->Y[i][j] = 2;
-                }
-            }
-        }
-            // init_mesh_Kershaw1(p->coor->nxp, p->coor->nyp,p->coor->X, p->coor->Y, p->constants->dx);
-
-    }
+    //         }
+    //     }
+    //     for ( i = 0; i < p->coor->nxp; i++) {
+    //         for ( j = 0; j < p->coor->nyp; j++) {
+    //             if (j == 0) {
+    //                 p->coor->Y[i][j] = -1;
+    //             }else if(j == 1) {
+    //                 p->coor->Y[i][j] = 0;
+    //             }else if(j == 2) {
+    //                 p->coor->Y[i][j] = 1;
+    //             }else if(j == 3) {
+    //                 p->coor->Y[i][j] = 2;
+    //             }
+    //         }
+    //     }
+    // }
 
     //BC for X
     
@@ -269,7 +270,7 @@ void init(Problem *p, char *datafaile) {
             p->temp->current[0][j]   = p->constants->TH; //pow(p->constants->TH,4);// * p->constants->a_rad;
         }
     }
-    if (nx == 3) {
+    else{
         for (i = 0; i < nx; i++){
             p->energy->prev[i][0]    = p->constants->a_rad * pow(p->constants->TH, 4);
             p->energy->current[i][0] = p->constants->a_rad * pow(p->constants->TH, 4);
@@ -277,8 +278,9 @@ void init(Problem *p, char *datafaile) {
             p->temp->current[i][0]   = p->constants->TH; //pow(p->constants->TH,4);// * p->constants->a_rad;
         }
     }
-    
     mesh_square_volume(p->vol->values, p->coor->X,p->coor->Y, nx, ny);
+    // print_2d(p->vol->values, nx, ny);
+    // exit(1);
     init_density(p->mats, p->rho);
     diagnostics_initial(p);
     printf("Done init\n");

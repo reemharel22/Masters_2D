@@ -27,7 +27,7 @@
 
 int main (int argc, char* argv[]) {
     char * str;
-    FILE *fenergy, *ftemp, *fx, *fy;
+    FILE *fenergy, *ftemp, *fx, *fy, *fenergy1, *ftemp1;
     Problem *p = malloc(sizeof(struct Problem));
     p->diff_coeff = malloc(sizeof(struct Data));
     p->vol = malloc(sizeof(struct Data));
@@ -68,19 +68,29 @@ int main (int argc, char* argv[]) {
     fclose(fx);
 
     fenergy = fopen("data/energy.txt", "w");
+    fenergy1 = fopen("data/energy1.txt", "w");
     ftemp = fopen("data/temperature.txt", "w");
+    ftemp1 = fopen("data/temperature1.txt", "w");
     fx = fopen("data/x.txt", "w");
     fy = fopen("data/y.txt", "w");
+ 
+
     if (p->energy->nx == 3) {
         diagnostic_position_y(p->coor->X, p->energy->nx + 1, p->energy->ny + 1, fx);
         diagnostic_position_y(p->coor->Y, p->energy->nx + 1, p->energy->ny + 1, fy);
         
     }
-    if (p->energy->ny == 3) {
+    else if (p->energy->ny == 3) {
         diagnostic_position_x(p->coor->X, p->energy->nx + 1, p->energy->ny + 1, fx);
         diagnostic_position_x(p->coor->Y, p->energy->nx + 1, p->energy->ny + 1, fy);
         
     }
+    else {
+        diagnostic_position_x(p->coor->X, p->energy->nx + 1, p->energy->ny + 1, fx);
+        diagnostic_position_y(p->coor->Y, p->energy->nx + 1, p->energy->ny + 1, fy);
+    }
+       fclose(fx);
+    fclose(fy);
     // diagnostic_energy_1d(p->energy, p->constants->a_rad,p->time->time_passed, 1, fenergy);
     // diagnostic_energy_1d(p->temp, p->constants->a_rad,p->time->time_passed , 1, ftemp);
 
@@ -94,15 +104,22 @@ int main (int argc, char* argv[]) {
             diagnostic_energy_1d_y(p->energy, p->constants->a_rad,p->time->time_passed , 1, fenergy);
             diagnostic_energy_1d_y(p->temp, p->constants->a_rad,p->time->time_passed , 1, ftemp);
         }
-        if (p->energy->ny == 3) {
+        else if (p->energy->ny == 3) {
             diagnostic_energy_1d_x(p->energy, p->constants->a_rad,p->time->time_passed , 1, fenergy);
             diagnostic_energy_1d_x(p->temp, p->constants->a_rad,p->time->time_passed , 1, ftemp);
+        }
+        else {
+            diagnostic_energy_1d_y(p->energy, p->constants->a_rad,p->time->time_passed , 1, fenergy);
+            diagnostic_energy_1d_y(p->temp, p->constants->a_rad,p->time->time_passed , 1, ftemp);
+            diagnostic_energy_1d_y(p->energy, p->constants->a_rad,p->time->time_passed , 5, fenergy1);
+            diagnostic_energy_1d_y(p->temp, p->constants->a_rad,p->time->time_passed , 5, ftemp1);
         }
         if (p->time->cycle % 1 == 0) {
             printf("\n@@@@@@@@@@ Done time step number: %d @@@@@@@@@@ \n",p->time->cycle);
         }
-        //  if (p->time->cycle == 10) 
+        if (p->time->cycle == 1) {
             // exit(1);
+        }
     } while( !update_time(p->time, p->temp) );
     
     clean_prog(p);

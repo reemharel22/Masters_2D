@@ -26,8 +26,7 @@ void calculate_temperature(Quantity *T, Quantity *E, Constants *consts, Data *op
     for (i = 1; i < X-1; i++) {
         for (j = 1; j < Y-1; j++) {
             coeff = (opac_fac * opacity[i][j] * 4.0 * pow(temp_prev[i][j], 3) * arad) / (cv[i][j]);
-            // printf("opacity %10e\n", opacity[i][j]);
-            v = arad * pow(temp_prev[i][j],4);
+            v = arad * pow(temp_prev[i][j], 4);
             temp_curr[i][j] = (v + coeff * c * dt * energy[i][j]) 
                                 / (1.0 + dt * c * coeff);
             temp_curr[i][j] = pow(temp_curr[i][j] / arad, 0.25);

@@ -153,13 +153,14 @@ void do_timestep(Problem *p) {
     if (VERBOSE)
         printf("Updating the current prev values\n");
     check_nan_2d(p->temp->current, p->energy->nx ,p->energy->ny, "temperature");
-    
     free_2d(b, p->energy->nx);
 
     check_nan_2d(p->temp->current, p->energy->nx ,p->energy->ny, "temperature");
     check_nan_2d(p->energy->current, p->energy->nx ,p->energy->ny, "energy");
+    
     check_monotoic_up(p->energy->current, p->energy->nx ,p->energy->ny);
     check_monotoic_up(p->temp->current, p->energy->nx ,p->energy->ny);
+
     // check_bc(p->energy, p->coor,p->diff_coeff, p->constants);
     return;
     
@@ -218,6 +219,7 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, Data*opac, Time
 
     double **jacobi = malloc_2d(nxp, nyp);
     double ***A = malloc_3d(nxp, nyp, 10);
+
     //#pragma omp parallel for default(shared)
     for(i = 0; i < nxp - 1; i++){
         for (j = 0; j < nyp - 1; j++) {
@@ -244,19 +246,12 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, Data*opac, Time
     // these sizes are cell quantities, therefore we go KC, LC
     // we do not go throught the last imaginary cells, ofc.
     // #pragma omp parallel for default(shared)
-    // print_2d(D, nx, ny);
     for(i = 0; i < nx -1; i++){
         for (j = 0; j < ny-1 ; j++) {
             //the reason we take jacob(i,j) is because we already made sigma(i,j)
             // be the same index as jacob(i,j), only R is shifted. see (15)
-            // B_sigma[i][j] = (R[i + 1][j + 1] + R[i + 1][j]) 
-            //                 / ( D[i][j] * jacobi[i][j] + D[i + 1][j] * jacobi[i + 1][j]);
-
-            // B_lambda[i][j] = (R[i + 1][j + 1] + R[i][j + 1]) 
-            // / ( D[i][j] * jacobi[i][j] + D[i][j + 1] * jacobi[i][j + 1]);
             B_sigma[i][j] = (R[i + 1][j + 1] + R[i + 1][j]) 
                             / (jacobi[i][j] + jacobi[i + 1][j]) * D[i][j];
-            // printf("sigma: %d %d %10e %10e %10e %10e\n", i,j, B_sigma[i][j], jacobi[i][j], jacobi[i + 1][j], D[i][j]);
             B_lambda[i][j] = (R[i + 1][j + 1] + R[i][j + 1]) 
                             / (jacobi[i][j] + jacobi[i][j + 1]) * D[i][j];
         }
@@ -279,17 +274,24 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, Data*opac, Time
         j0 = j;
         xl0 = 0.5 * sqrt( pow(X[i][j0 + 1] - X[i][j0],2) + pow(Y[i][j0 + 1] - Y[i][j0],2) );
         xl1 = 0.5 * sqrt( pow(X[i][j1 + 1] - X[i][j1],2) + pow(Y[i][j1 + 1] - Y[i][j1],2) );
-        if (nx == 3) {
+        if (ny != 3) {
         B_lambda[i][j] = (R[i + 1][j + 1] + R[i][j + 1]) 
                     / (jacobi[i][j] + jacobi[i][j + 1]) 
                     * 2.0 * (sigma_boltz * pow(TH, 4) - c_light * energy[i][j+1] / 4.0) / (energy[i][j] - energy[i][j+1] ) * (xl1 + xl0);
+        // if (i == 1) {
+        //     printf("BLAMDA: %10e\n", (B_lambda[i][j]));
+        //     printf("R: %10e %10e\n", R[i][j + 1] , R[i+1][j + 1]);
+        //     printf("JAC: %10e %10e\n", jacobi[i][j] , jacobi[i][j + 1]);
+        //     printf("XL!: %10e %10e\n", xl1 , xl0);
+        // }
         }
     }
-
+    
+    
     //RIGHT WALL - leapes
     for (j = 0; j < ny; j++) {
         // data[n - 1][j] = 0; nothing in our case
-        // B_sigma[nx-2][j] = 0;
+        B_sigma[nx-2][j] = 0;
     }
     
     //LEFT WALL - 190 ev DO DO DO
@@ -301,16 +303,11 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, Data*opac, Time
         xl0 = 0.5 * sqrt( pow(X[i0 + 1][j] - X[i0][j],2) + pow(Y[i0 + 1][j] - Y[i0][j],2) );
         xl1 = 0.5 * sqrt( pow(X[i1 + 1][j] - X[i1][j],2) + pow(Y[i1 + 1][j] - Y[i1][j],2) );
         B_sigma[i][j] = 0;
-        // B_lambda[i][j] = 0;
         if (ny == 3) {
             B_sigma[i][j] = (R[i + 1][j + 1] + R[i + 1][j]) 
                             / (jacobi[i][j] + jacobi[i + 1][j]) 
                             * 2.0 * (sigma_boltz * pow(TH, 4) - c_light * energy[i+1][j] / 4.0) / (energy[i][j] - energy[i+1][j]) * (xl1 + xl0);
         }
-        // B_sigma[i][j] = 122432.11547629160*122432.11547629160;
-        // printf("B_SIGMA i: %d j: %d value:%10e\n",i,j,B_sigma[i][j]);
-        // xl1 = 0.5*sqrt( pow(R[i][j1+1] - R[i][j1], 2) + pow(Z[i][j1+1]-Z[i][j1] , 2));
-        // xl0 = 0.5*sqrt( pow(R[i][j0+1] - R[i][j0], 2) + pow(Z[i][j0+1]-Z[i][j0] , 2));
     }
     // printf("\n\n");
     // print_2d(B_sigma, nx, ny);
@@ -350,7 +347,6 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, Data*opac, Time
             z2 = YL_KL[i + 1][j] * YL_KL[i + 1][j];
             z3 = YK_KL[i][j]     * YK_KL[i][j];
             z4 = YK_KL[i][j + 1] * YK_KL[i][j + 1];
-
             S_sigma[i][j]  = B_sigma[i][j]  * ( r1 + z1 + r2 + z2) / 2.0;
             S_lambda[i][j] = B_lambda[i][j] * ( r3 + z3 + r4 + z4) / 2.0;
         }
@@ -417,10 +413,7 @@ double ***build_matrix_A(Coordinate *coor, Data *vol,Data *diff, Data*opac, Time
 
         }
     }
-    for (size_t j = 0; j < ny - 1; j++)
-    {
-        // print(A[1][j][4]);
-    }
+
     
     free_2d(XK_KL, nxp);
     free_2d(XL_KL, nxp);

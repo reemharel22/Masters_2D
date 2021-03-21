@@ -3,7 +3,7 @@ Time Segment: {
 	Starting dt:     1.000000e-19.
 	dt max:     1.000000e-11
 	dt factor:     1.000000e-01.
-	Time finish:     1.000000e-09.
+	Time finish:     1.500000e-10.
 }
 Materials Segment: {
 	Number of Materials: 1

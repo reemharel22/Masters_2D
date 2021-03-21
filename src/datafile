@@ -1,7 +1,7 @@
 ny 150
-nx 1
-xmax 0
-ymax 3
+nx 10
+xmax 1
+ymax 3.5
 source 0.0
 dt_0 1E-19
 dt_max 1E-11
@@ -9,7 +9,7 @@ dt_factor 0.1
 sigma_factor 1.0
 t0 0
 time_diagnostic 1E-11
-time_stop 1E-9
+time_stop 1.5E-10
 sigma_boltzman 5.6704E-5
 c_light 2.99792458E10
 a_rad 7.5657674E-15

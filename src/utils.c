@@ -10,7 +10,7 @@
 
 extern const int VERBOSE = 1;
 extern const double HEV = 1160500;
-
+extern const double PI = 3.14159265359;
 
 double get_time() {
   return omp_get_wtime();
@@ -199,22 +199,30 @@ void free_3d(double ***ptr, int n, int m) {
 }
 
 double square_volume(double x1, double x2, double y1, double y2) {
-    if (x1 == x2) {
-        return y1 - y2;
-    }
-    else if (y1 == y2) {
-        return x1 - x2;
-    } 
-    return (y1-y2) * (x1-x2);
-    // return x1-x2;
+    return 0;
 }
 
 void mesh_square_volume(double **volume, double **X, double **Y, 
 int n, int m) {
     int i,j;
-    for ( i = 0; i < n; i++) {
+    double x1,x2,y1,y2;
+    for (i = 0; i < n; i++) {
         for (j = 0; j < m; j++) {
-            volume[i][j] = square_volume(X[i+1][j],X[i][j],Y[i][j+1],Y[i][j]);  
+            y2 = Y[i][j+1];
+            y1 = Y[i][j];
+            x2 = X[i+1][j];
+            x1 = X[i][j];
+            // if (n == 3){ // 1d problem on y axis
+            //     volume[i][j] = y2 - y1;
+            // }
+            // else if (m == 3) { // 1d problem on x axis
+            //     volume[i][j] = x2 - x1;
+            // }
+            // else {
+                volume[i][j] = fabs((y2 - y1) * PI*(x2*x2 - x1*x1)) / (2 * PI);
+                // volume[i][j] =  (y2-y1) * (x2 - x1) ;
+
+            // }
         }
     }
 
@@ -410,7 +418,7 @@ void check_monotoic_up(double **x, int nx, int ny) {
     int i,j;
     for (i = 2; i < nx - 1; i++){
         for (j = 2; j < ny - 1; j++) {
-            if ((1.001*x[i][j] ) < x[i + 1][j]) {
+            if ((1.001*x[i][j] ) < x[i][j +1]) {
                 printf("Not monotic ole %d %d\n", i, j);
                 print(x[i][j]);
                 print(x[i+1][j]);
